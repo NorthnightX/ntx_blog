@@ -1,0 +1,61 @@
+package com.ntx.blog.dto;
+
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import lombok.Data;
+
+import java.time.LocalDateTime;
+@Data
+public class BlogDTO {
+    /**
+     * 博客编号
+     */
+    @TableId(type = IdType.AUTO)
+    private Integer id;
+
+    /**
+     * 博客标题
+     */
+    private String title;
+
+    /**
+     * 博客封面
+     */
+    private String image;
+
+    /**
+     * 点击阅读量
+     */
+    private Integer clickCount;
+
+    /**
+     * 博客内容
+     */
+    private String content;
+
+    /**
+     * 博客所属分类
+     */
+    private Integer typeId;
+    private String typeName;
+
+    /**
+     * 状态（1：正常 2：停用）
+     */
+    private Integer status;
+
+    /**
+     * 逻辑删除 1（true）未删除， 0（false）已删除
+     */
+    private Integer deleted;
+
+    /**
+     * 创建时间
+     */
+    private LocalDateTime gmtCreate;
+
+    /**
+     * 更新时间
+     */
+    private LocalDateTime gmtModified;
+}

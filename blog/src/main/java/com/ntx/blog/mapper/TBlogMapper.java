@@ -1,0 +1,20 @@
+package com.ntx.blog.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.ntx.blog.domain.TBlog;
+import org.apache.ibatis.annotations.Mapper;
+
+/**
+* @author NorthnightX
+* @description 针对表【t_blog】的数据库操作Mapper
+* @createDate 2023-07-24 15:40:56
+* @Entity generator.domain.TBlog
+*/
+@Mapper
+public interface TBlogMapper extends BaseMapper<TBlog> {
+
+}
+
+
+
+
