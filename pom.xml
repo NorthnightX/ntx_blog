@@ -13,7 +13,9 @@
         <module>user</module>
         <module>blog</module>
         <module>blogType</module>
-        <module>eureka-server</module>
+<!--        <module>eureka-server</module>-->
+        <module>feign_api</module>
+        <module>common</module>
     </modules>
     <!--版本过高会和nacos冲突-->
     <parent>
@@ -50,6 +52,7 @@
         <!--            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>-->
         <!--            <version>2.2.5.RELEASE</version>-->
         <!--        </dependency>-->
+
 
         <!--        nacos注册中心-->
         <dependency>
@@ -142,10 +145,10 @@
             <artifactId>spring-boot-starter-web-services</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-webflux</artifactId>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.boot</groupId>-->
+<!--            <artifactId>spring-boot-starter-webflux</artifactId>-->
+<!--        </dependency>-->
 
         <dependency>
             <groupId>org.mybatis.spring.boot</groupId>

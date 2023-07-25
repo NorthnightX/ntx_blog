@@ -1,7 +1,6 @@
 server:
   port: 8081
-  servlet:
-    context-path: /blog
+
 spring:
   rabbitmq:
     host: localhost
@@ -29,7 +28,7 @@ spring:
     name: userService
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://127.0.0.1:3306/blog?useSSL=false&serverTimezone=UTC
+    url: jdbc:mysql://127.0.0.1:3306/blog-user?useSSL=false&serverTimezone=UTC
     username: root
     password: 123456
   redis:

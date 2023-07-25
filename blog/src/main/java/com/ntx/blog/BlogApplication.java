@@ -2,6 +2,7 @@ package com.ntx.blog;
 
 import com.netflix.loadbalancer.IRule;
 import com.netflix.loadbalancer.RandomRule;
+import com.ntx.feign.client.BlogTypeClient;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
@@ -12,8 +13,8 @@ import org.springframework.web.client.RestTemplate;
 
 
 @SpringBootApplication
-@EnableDiscoveryClient
-@EnableFeignClients
+@EnableDiscoveryClient //添加注册中心支持
+@EnableFeignClients(clients = BlogTypeClient.class) //开启feign支持，指定扫描包
 public class BlogApplication {
     public static void main(String[] args) {
         SpringApplication.run(BlogApplication.class, args);

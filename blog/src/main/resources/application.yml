@@ -1,7 +1,5 @@
 server:
-  port: 8082
-  servlet: #访问路径
-    context-path: /blog
+  port: 8085
 spring:
   rabbitmq: #消息队列
     host: localhost
@@ -31,7 +29,7 @@ spring:
 
   datasource:   #JDBC
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://127.0.0.1:3306/blog?useSSL=false&serverTimezone=UTC
+    url: jdbc:mysql://127.0.0.1:3306/blog-blog?useSSL=false&serverTimezone=UTC
     username: root
     password: 123456
 
@@ -79,8 +77,8 @@ blogTypeService: #nacos负载均衡
 #      default:
 #        logger-level: FULL #配置日志级别
 
-feign:
-  httpclient:
-    enabled: true #支持httpclient的开关
-    max-connections: 200 #最大连接数
-    max-connections-per-route: 50 #单个路径的最大的连接数
+#feign:
+#  httpclient:
+#    enabled: true #支持httpclient的开关
+#    max-connections: 200 #最大连接数
+#    max-connections-per-route: 50 #单个路径的最大的连接数

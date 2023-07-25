@@ -1,0 +1,30 @@
+server:
+  port: 10100
+spring:
+  application:
+    name: gateway
+  cloud:
+    nacos:
+      server-addr: localhost:8848
+    gateway:
+      routes:
+        - id: blog-type-service #路由标识，必须唯一
+          uri: lb://blogTypeService #路由的目标地址
+          predicates: #路径断言，判断请求是否符合规则
+            - Path=/blogType/** #路径断言，判断路径是不是以blogType开头
+        - id: blog-service #路由标识，必须唯一
+          uri: lb://blogService #路由的目标地址
+          predicates: #路径断言，判断请求是否符合规则
+            - Path=/blog/** #路径断言，判断路径是不是以blog开头
+      globalcors:
+        add-to-simple-url-handler-mapping: true #是否拦截浏览器的options请求
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "*" #允许那些问题跨域
+            allowedHeaders: "*" #允许请求中携带的头信息
+            allowedMethods: "*" #允许跨域的ajax的请求
+            allowCredentials: true # 是否允许携带cookie
+            maxAge: 360000 # 这次跨域检测的有效期
+#      default-filters:
+#        - AddRequestHeader=NTX,NorthNightX #全局过滤器
+

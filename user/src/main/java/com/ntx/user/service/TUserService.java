@@ -1,7 +1,11 @@
 package com.ntx.user.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.ntx.user.domain.LoginForm;
 import com.ntx.user.domain.TUser;
+import org.ntx.common.domain.Result;
+
+import java.io.IOException;
 
 /**
 * @author NorthnightX
@@ -11,4 +15,8 @@ import com.ntx.user.domain.TUser;
 public interface TUserService extends IService<TUser> {
 
     TUser getUserById(int id);
+
+    Result login(LoginForm loginForm);
+
+    Result getVerificationCode() throws IOException;
 }

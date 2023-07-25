@@ -14,6 +14,11 @@ public class BlogTypeController {
     @Autowired
     private TBlogTypeService blogTypeService;
 
+    /**
+     * 获取单个blog
+     * @param id
+     * @return
+     */
     @GetMapping("/getByTypeId/{id}")
     public TBlogType getByTypeId(@PathVariable int id){
         return blogTypeService.getTypeById(id);
