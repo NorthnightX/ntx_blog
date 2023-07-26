@@ -67,12 +67,12 @@ public class TUserServiceImpl extends ServiceImpl<TUserMapper, TUser> implements
 
         }
         //账号登陆
-//        String redisCode = stringRedisTemplate.opsForValue().get(loginForm.getCodeKey());
-//        if (redisCode == null) {
-//            return Result.error("验证码过期");
-//        } else if (!redisCode.equals(loginForm.getCode())) {
-//            return Result.error("验证码不正确");
-//        }
+        String redisCode = stringRedisTemplate.opsForValue().get(loginForm.getCodeKey());
+        if (redisCode == null) {
+            return Result.error("验证码过期");
+        } else if (!redisCode.equals(loginForm.getCode())) {
+            return Result.error("验证码不正确");
+        }
         //加密密码
         String MD5Password = MD5.create().digestHex(loginForm.getPassword());
         System.out.println(MD5Password);

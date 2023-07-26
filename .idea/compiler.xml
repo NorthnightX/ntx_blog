@@ -7,12 +7,14 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
+        <module name="common" />
+        <module name="blog-gateway" />
+        <module name="upload" />
+        <module name="showImage" />
         <module name="feign_api" />
         <module name="blog" />
-        <module name="common" />
         <module name="user" />
         <module name="blogType" />
-        <module name="blog-gateway" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
@@ -29,6 +31,8 @@
       <module name="eureka-server" options="-parameters" />
       <module name="feign_api" options="-parameters" />
       <module name="gateway" options="-parameters" />
+      <module name="showImage" options="-parameters" />
+      <module name="upload" options="-parameters" />
       <module name="user" options="-parameters" />
     </option>
   </component>

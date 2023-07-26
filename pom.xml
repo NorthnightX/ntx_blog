@@ -16,6 +16,8 @@
 <!--        <module>eureka-server</module>-->
         <module>feign_api</module>
         <module>common</module>
+        <module>upload</module>
+        <module>showImage</module>
     </modules>
     <!--版本过高会和nacos冲突-->
     <parent>

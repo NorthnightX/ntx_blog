@@ -12,16 +12,14 @@
     <url>http://maven.apache.org</url>
     <dependencies>
 
-
-        <dependency>
-            <groupId>com.ntx</groupId>
-            <artifactId>blogType</artifactId>
-            <version>1.0-SNAPSHOT</version>
-        </dependency>
-
         <dependency>
             <groupId>com.ntx</groupId>
             <artifactId>feign_api</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.ntx</groupId>
+            <artifactId>common</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
     </dependencies>

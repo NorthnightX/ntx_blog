@@ -9,6 +9,8 @@ import com.ntx.blogType.service.TBlogTypeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 /**
 * @author NorthnightX
 * @description 针对表【t_blog_type】的数据库操作Service实现
@@ -22,6 +24,11 @@ public class TBlogTypeServiceImpl extends ServiceImpl<TBlogTypeMapper, TBlogType
     @Override
     public TBlogType getTypeById(int id) {
         return blogTypeMapper.getTypeById(id);
+    }
+
+    @Override
+    public List<TBlogType> getByIds(List<Long> ids) {
+        return blogTypeMapper.getByIds(ids);
     }
 }
 

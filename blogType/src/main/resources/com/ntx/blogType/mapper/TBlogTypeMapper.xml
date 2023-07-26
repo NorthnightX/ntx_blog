@@ -14,4 +14,13 @@
         </where>
 
     </select>
+    <select id="getByIds" resultType="com.ntx.blogType.domain.TBlogType">
+        select id, name from t_blog_type
+        <where>
+            id in
+            <foreach collection="ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </where>
+    </select>
 </mapper>

@@ -1,4 +1,4 @@
-package com.ntx.gateway.filter;
+package com.ntx.gateway.config;
 
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;

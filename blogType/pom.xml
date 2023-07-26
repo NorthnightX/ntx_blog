@@ -11,7 +11,11 @@
     <name>blogType Maven Webapp</name>
     <url>http://maven.apache.org</url>
     <dependencies>
-
+        <dependency>
+            <groupId>com.ntx</groupId>
+            <artifactId>common</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
     </dependencies>
     <build>
         <finalName>blogType</finalName>
