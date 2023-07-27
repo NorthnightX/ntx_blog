@@ -20,10 +20,21 @@ public class UserController {
         return Result.success(userService.getUserById(id));
     }
 
+    /**
+     * 登录验证码
+     * @return
+     * @throws IOException
+     */
     @GetMapping("/verificationCode")
     public Result verificationCode() throws IOException {
         return userService.getVerificationCode();
     }
+
+    /**
+     * 登录
+     * @param loginForm
+     * @return
+     */
     @PostMapping("/login")
     public Result login(@RequestBody LoginForm loginForm){
         return userService.login(loginForm);

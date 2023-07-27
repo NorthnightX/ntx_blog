@@ -26,9 +26,28 @@ public class TBlogTypeServiceImpl extends ServiceImpl<TBlogTypeMapper, TBlogType
         return blogTypeMapper.getTypeById(id);
     }
 
+    /**
+     * blogController请求类型数据
+     * @param ids
+     * @return
+     */
     @Override
     public List<TBlogType> getByIds(List<Long> ids) {
         return blogTypeMapper.getByIds(ids);
+    }
+
+    /**
+     * 分页查询
+     * @param pageNum
+     * @param pageSize
+     * @param name
+     * @return
+     */
+    @Override
+    public List<TBlogType> getPage(Integer pageNum, Integer pageSize, String name) {
+        int start = (pageNum - 1) * pageSize;
+        int end = pageNum * pageSize;
+        return blogTypeMapper.queryBlogPage(start, end, name);
     }
 }
 

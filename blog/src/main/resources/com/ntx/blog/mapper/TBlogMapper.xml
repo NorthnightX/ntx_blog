@@ -4,4 +4,48 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.ntx.blog.mapper.TBlogMapper">
 
+    <update id="updateBlogById">
+        update t_Blog
+        <set>
+            <if test="title != null">
+                title = #{title},
+            </if>
+            <if test="content != null">
+                content = #{content},
+            </if>
+            <if test="image != null">
+                image = #{image},
+            </if>
+            <if test="typeId != null">
+                type_id = #{typeId},
+            </if>
+            <if test="clickCount != null">
+                click_count = #{clickCount},
+            </if>
+            <if test="deleted != null">
+                deleted = #{deleted},
+            </if>
+            <if test="status != null">
+                status = #{status},
+            </if>
+            <if test="gmtModified != null">
+                gmt_modified = #{gmtModified},
+            </if>
+        </set>
+        <where>
+            id = #{id}
+        </where>
+    </update>
+    <select id="getPage" resultType="com.ntx.blog.domain.TBlog">
+        select * from t_blog
+        <where>
+        <if test="tBlog.title != null">
+            and title like #{tBlog.title}
+        </if>
+        <if test="tBlog.typeId != null">
+            and type_id = #{tBlog.typeId}
+        </if>
+        </where>
+        limit #{start}, #{end}
+    </select>
 </mapper>

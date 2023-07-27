@@ -16,4 +16,6 @@ public interface TBlogTypeService extends IService<TBlogType> {
     TBlogType getTypeById(int id);
 
     List<TBlogType> getByIds(List<Long> ids);
+
+    List<TBlogType> getPage(Integer pageNum, Integer pageSize, String name);
 }

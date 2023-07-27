@@ -70,7 +70,7 @@ public class TUserServiceImpl extends ServiceImpl<TUserMapper, TUser> implements
         String redisCode = stringRedisTemplate.opsForValue().get(loginForm.getCodeKey());
         if (redisCode == null) {
             return Result.error("验证码过期");
-        } else if (!redisCode.equals(loginForm.getCode())) {
+        } else if (!redisCode.equalsIgnoreCase(loginForm.getCode())) {
             return Result.error("验证码不正确");
         }
         //加密密码

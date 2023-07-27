@@ -1,5 +1,8 @@
 package org.ntx.common.commons;
 
+/**
+ * 系统常量
+ */
 public class SystemContent {
 
     public static final Integer SUCCESS_CODE = 200;

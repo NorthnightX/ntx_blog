@@ -23,6 +23,12 @@ import static org.ntx.showImage.config.SystemConstant.IMAGE_UPLOAD_DIR_FIND;
 @RestController
 @RequestMapping("/image")
 public class ShowController {
+    /**
+     * 图片请求回显
+     * @param httpServletRequest
+     * @return
+     * @throws IOException
+     */
     @GetMapping("/**")
     public ResponseEntity<InputStreamResource> showImage(HttpServletRequest httpServletRequest) throws IOException {
         StringBuffer requestURL = httpServletRequest.getRequestURL();
@@ -44,6 +50,11 @@ public class ShowController {
         return new ResponseEntity<>(inputStreamResource, headers, HttpStatus.OK);
     }
 
+    /**
+     * 获取文件名
+     * @param url
+     * @return
+     */
     private String extractFileNameFromURL(String url) {
         // 在这里解析出文件名，这里假设文件名是 URL 中最后一个斜杠后的部分
         int lastIndex = url.lastIndexOf('/');

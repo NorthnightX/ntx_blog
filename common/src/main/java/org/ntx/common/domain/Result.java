@@ -6,6 +6,10 @@ import lombok.NoArgsConstructor;
 
 import static org.ntx.common.commons.SystemContent.*;
 
+/**
+ * 结果类
+ * @param <T>
+ */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

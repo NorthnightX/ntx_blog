@@ -3,6 +3,7 @@ package com.ntx.blog.controller;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.api.R;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ntx.blog.domain.TBlog;
 import com.ntx.blog.dto.BlogDTO;
@@ -14,6 +15,7 @@ import org.ntx.common.domain.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -72,41 +74,73 @@ public class BlogController {
         return blogDTO;
     }
 
+    /**
+     * blog分页查询
+     * @param pageNum
+     * @param pageSize
+     * @param title
+     * @param typeId
+     * @return
+     */
     @GetMapping("/getBlogPage")
     public Result getBlogPage(@RequestParam(required = false, defaultValue = "1") int pageNum,
                               @RequestParam(required = false, defaultValue = "10") int pageSize,
                               @RequestParam(required = false) String title,
                               @RequestParam(required = false) Long typeId){
-        //新建page对象
-        Page<TBlog> page = new Page<>(pageNum, pageSize);
         //条件查询
-        LambdaQueryWrapper<TBlog> blogLambdaQueryWrapper = new LambdaQueryWrapper<>();
-        blogLambdaQueryWrapper.like(title != null && title.length() > 0,
-                TBlog::getTitle, title);
-        blogLambdaQueryWrapper.eq(typeId != null,
-                TBlog::getTypeId, typeId);
-        blogService.page(page, blogLambdaQueryWrapper);
+        LambdaQueryWrapper<TBlog> queryWrapper = new LambdaQueryWrapper<>();
+        TBlog tBlog = new TBlog();
+        if(title != null){
+            queryWrapper.like(TBlog::getTitle, title);
+            tBlog.setTitle("%" + title + "%");
+        }
+        if(typeId != null){
+            queryWrapper.eq(TBlog::getTypeId, typeId);
+            tBlog.setTypeId(Math.toIntExact(typeId));
+        }
         //获取查询的结果
-        List<TBlog> records = page.getRecords();
+        List<TBlog> pageInfo = blogService.getPage(pageNum, pageSize, tBlog);
         //使用stream获取typeId
-        List<Integer> typeIds = records.stream().map(TBlog::getTypeId).distinct().collect(Collectors.toList());
+        List<Integer> typeIds = pageInfo.stream().
+                map(TBlog::getTypeId).distinct().collect(Collectors.toList());
         //远程调用blogType模块查询typeName
+        if(typeIds.size() == 0){
+            return Result.error("找不到指定内容");
+        }
         List<TBlogType> byTypeIds = blogTypeClient.getByTypeIds(typeIds);
-        Map<Integer, String> typesMap = byTypeIds.stream().collect(Collectors.toMap(TBlogType::getId, TBlogType::getName));
+        Map<Integer, String> typesMap = byTypeIds.stream().
+                collect(Collectors.toMap(TBlogType::getId, TBlogType::getName));
         //将结果转成map
         //stream流进行数据处理，返回blogDTO集合
-        List<BlogDTO> blogDTOList = records.stream().map((item) -> {
+        List<BlogDTO> blogDTOList = pageInfo.stream().map((item) -> {
             BlogDTO blogDTO = new BlogDTO();
             BeanUtil.copyProperties(item, blogDTO);
             blogDTO.setTypeName(typesMap.get(blogDTO.getTypeId()));
             return blogDTO;
         }).collect(Collectors.toList());
         //数据封装
-        Page<BlogDTO> pageInfo = new Page<>();
-        BeanUtil.copyProperties(page, pageInfo, "records");
-        pageInfo.setRecords(blogDTOList);
-        return Result.success(pageInfo);
+        Page<BlogDTO> page = new Page<>(pageNum, pageSize);
+        int count = blogService.count(queryWrapper);
+        page.setTotal(count);
+        page.setRecords(blogDTOList);
+        return Result.success(page);
+    }
 
+    /**
+     * 更新blog信息
+     * @param blog
+     * @return
+     */
+    @PutMapping("/updateBlog")
+    public Result updateBlog(@RequestBody TBlog blog){
+        blog.setGmtModified(LocalDateTime.now());
+        int updated = blogService.updateBlodById(blog);
+        if(updated == 1){
+            return Result.success("修改成功");
+        }
+        else{
+            return Result.error("修改失败");
+        }
     }
 
 

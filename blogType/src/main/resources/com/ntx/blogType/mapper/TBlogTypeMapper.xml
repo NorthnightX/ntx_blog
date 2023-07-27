@@ -23,4 +23,13 @@
             </foreach>
         </where>
     </select>
+    <select id="queryBlogPage" resultType="com.ntx.blogType.domain.TBlogType">
+        select * from t_blog_type
+                 <where>
+                    <if test="name.length > 0">
+                        name like #{name}
+                    </if>
+                 </where>
+                 limit #{start}, #{end}
+    </select>
 </mapper>
