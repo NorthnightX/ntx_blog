@@ -4,10 +4,13 @@ server:
 spring:
   rabbitmq:
     host: localhost
-    virtual-host: /email
+    virtual-host: /ntx
     port: 5672
     username: root
     password: 123456
+    listener:
+      simple:
+        prefetch: 1 #消息预取，处理完才能获取下一个消息
   mail:
     host: smtp.qq.com
     username: 2927697242@qq.com

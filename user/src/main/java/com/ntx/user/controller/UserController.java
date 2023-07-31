@@ -39,4 +39,9 @@ public class UserController {
     public Result login(@RequestBody LoginForm loginForm){
         return userService.login(loginForm);
     }
+
+    @GetMapping("/phoneCode")
+    public Result phoneCode(String phone){
+        return userService.phoneCode(phone);
+    }
 }

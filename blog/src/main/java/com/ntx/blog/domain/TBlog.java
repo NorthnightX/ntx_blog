@@ -66,10 +66,11 @@ public class TBlog implements Serializable {
     /**
      * 更新时间
      */
-    private LocalDateTime gmtModified;
+    private  LocalDateTime gmtModified;
 
     @TableField(exist = false)
-    private static final long serialVersionUID = 1L;
+    private  static final long serialVersionUID = 1L;
+
 
     @Override
     public boolean equals(Object that) {

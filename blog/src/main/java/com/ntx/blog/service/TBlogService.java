@@ -16,4 +16,5 @@ public interface TBlogService extends IService<TBlog> {
     int updateBlodById(TBlog blog);
 
     List<TBlog> getPage(Integer pageNum, Integer pageSize, TBlog tBlog);
+
 }

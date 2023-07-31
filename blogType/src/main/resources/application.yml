@@ -3,7 +3,7 @@ server:
 spring:
   rabbitmq:
     host: localhost
-    virtual-host: /email
+    virtual-host: /ntx
     port: 5672
     username: root
     password: 123456

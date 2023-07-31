@@ -1,6 +1,8 @@
 package com.ntx.user.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.bean.copier.CopyOptions;
+import cn.hutool.core.util.RandomUtil;
 import cn.hutool.crypto.digest.MD5;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -20,14 +22,15 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.HttpCookie;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 
-import static com.ntx.user.common.RedisConstant.LOGIN_CODE;
-import static com.ntx.user.common.RedisConstant.LOGIN_CODE_TTL;
+import static com.ntx.user.common.RedisConstant.*;
 
 /**
  * @author NorthnightX
@@ -59,12 +62,19 @@ public class TUserServiceImpl extends ServiceImpl<TUserMapper, TUser> implements
             //手机登录
             if (loginForm.getPhoneCode() != null) {
                 //手机验证码登录
-                return null;
-            } else {
-                //手机密码登录
-                return null;
+                String phone = loginForm.getPhone();
+                String phoneCode = loginForm.getPhoneCode();
+                String redisKey = PHONE_CODE + phone;
+                if(!phoneCode.equals(stringRedisTemplate.opsForValue().get(redisKey))){
+                    return Result.error("验证码错误");
+                }
+                //验证码正确
+                LambdaQueryWrapper<TUser> queryWrapper = new LambdaQueryWrapper<>();
+                queryWrapper.eq(TUser::getPhone, phone);
+                TUser user = this.getOne(queryWrapper);
+                UserDTO userDTO = setUserInfoForReturn(user);
+                return Result.success(userDTO);
             }
-
         }
         //账号登陆
         String redisCode = stringRedisTemplate.opsForValue().get(loginForm.getCodeKey());
@@ -79,15 +89,37 @@ public class TUserServiceImpl extends ServiceImpl<TUserMapper, TUser> implements
         LambdaQueryWrapper<TUser> userLambdaQueryWrapper = new LambdaQueryWrapper<>();
         userLambdaQueryWrapper.eq(TUser::getName, loginForm.getUsername());
         TUser user = this.getOne(userLambdaQueryWrapper);
-        UserDTO userDTO = new UserDTO();
-        BeanUtil.copyProperties(user, userDTO);
         //如果密码相等
         if (user.getPassword().equals(MD5Password)) {
+            UserDTO userDTO = setUserInfoForReturn(user);
             return Result.success(userDTO);
         } else {
             return Result.error("密码错误");
         }
+    }
 
+    /**
+     * 设置userDTO
+     * @param user
+     * @return
+     */
+    private UserDTO setUserInfoForReturn(TUser user){
+        UserDTO userDTO = new UserDTO();
+        BeanUtil.copyProperties(user, userDTO);
+        Integer id = userDTO.getId();
+        String redisKey = LOGIN_USER + id;
+        Map<String, Object> userMap = BeanUtil.beanToMap(
+                userDTO, new HashMap<>(), CopyOptions.create().
+                        setIgnoreNullValue(true).setFieldValueEditor((fieldKey, fieldValue) -> {
+                            if(fieldValue == null){
+                                fieldValue = "0";
+                            } else {
+                                fieldValue = fieldValue + "";
+                            }
+                            return fieldValue;}));
+        stringRedisTemplate.opsForHash().putAll(redisKey, userMap);
+        stringRedisTemplate.expire(redisKey, LOGIN_USER_TTL, TimeUnit.DAYS);
+        return userDTO;
     }
 
     /**
@@ -117,6 +149,26 @@ public class TUserServiceImpl extends ServiceImpl<TUserMapper, TUser> implements
         map.put("redisKey", redisKey);
         map.put("base64Str", baseStr);
         return Result.success(map);
+    }
+
+    /**
+     * 生成手机验证码
+     * @param phone
+     * @return
+     */
+    @Override
+    public Result phoneCode(String phone) {
+        LambdaQueryWrapper<TUser> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TUser::getPhone, phone);
+        TUser user = this.getOne(queryWrapper);
+        if(user == null){
+            return Result.error("请先注册");
+        }
+        String redisKey = PHONE_CODE + phone;
+        String randomed = RandomUtil.randomNumbers(6);
+        System.out.println(randomed);
+        stringRedisTemplate.opsForValue().set(redisKey, randomed, LOGIN_CODE_TTL, TimeUnit.MINUTES);
+        return Result.success(randomed);
     }
 }
 

@@ -19,4 +19,6 @@ public interface TUserService extends IService<TUser> {
     Result login(LoginForm loginForm);
 
     Result getVerificationCode() throws IOException;
+
+    Result phoneCode(String phone);
 }

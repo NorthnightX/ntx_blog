@@ -16,7 +16,7 @@ import java.util.List;
 * @createDate 2023-07-24 15:40:56
 */
 @Service
-public class TBlogServiceImpl extends ServiceImpl<TBlogMapper, TBlog>
+public  class TBlogServiceImpl extends ServiceImpl<TBlogMapper, TBlog>
     implements TBlogService {
 
     @Autowired
@@ -27,14 +27,14 @@ public class TBlogServiceImpl extends ServiceImpl<TBlogMapper, TBlog>
     }
 
     /**
-     * 分页
-     * @param pageNum
+     *
      * @param pageSize
      * @param tBlog
      * @return
      */
     @Override
     public List<TBlog> getPage(Integer pageNum, Integer pageSize, TBlog tBlog) {
+
         int start = (pageNum - 1) * pageSize;
         int end = pageNum * pageSize;
         return blogMapper.getPage(start, end, tBlog);
