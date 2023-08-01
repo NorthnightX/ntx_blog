@@ -62,7 +62,7 @@ public class BlogDTO {
     private String bloggerName;
     private Integer isPublic;
     private Integer comment;
-    private Integer like;
-    private Integer stamp;
-    private Integer collect;
+    private Integer likeCount;
+    private Integer stampCount;
+    private Integer collectCount;
 }

@@ -71,9 +71,9 @@ public class TBlog implements Serializable {
     private Integer blogger;
     private Integer isPublic;
     private Integer comment;
-    private Integer like;
-    private Integer stamp;
-    private Integer collect;
+    private Integer likeCount;
+    private Integer stampCount;
+    private Integer collectCount;
 
 
 
