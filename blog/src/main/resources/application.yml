@@ -66,6 +66,7 @@ blogTypeService: #nacos负载均衡
     NFLoadBalancerRuleClassName: com.alibaba.cloud.nacos.ribbon.NacosRule
 
 
+
 #eureka: #euraka ！不能和nacos同时配置
 #  client:
 #    service-url:

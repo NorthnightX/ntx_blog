@@ -1,10 +1,10 @@
-package org.ntx.common.domain;
+package com.ntx.common.domain;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import static org.ntx.common.commons.SystemContent.*;
+import static com.ntx.common.commons.SystemContent.*;
 
 /**
  * 结果类

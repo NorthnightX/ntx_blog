@@ -46,8 +46,7 @@ public class TBlogTypeServiceImpl extends ServiceImpl<TBlogTypeMapper, TBlogType
     @Override
     public List<TBlogType> getPage(Integer pageNum, Integer pageSize, String name) {
         int start = (pageNum - 1) * pageSize;
-        int end = pageNum * pageSize;
-        return blogTypeMapper.queryBlogPage(start, end, name);
+        return blogTypeMapper.queryBlogPage(start, pageSize, name);
     }
 }
 

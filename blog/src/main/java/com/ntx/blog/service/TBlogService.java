@@ -1,9 +1,10 @@
 package com.ntx.blog.service;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.ntx.blog.domain.TBlog;
+import com.ntx.common.domain.Result;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -17,4 +18,5 @@ public interface TBlogService extends IService<TBlog> {
 
     List<TBlog> getPage(Integer pageNum, Integer pageSize, TBlog tBlog);
 
+    Result queryByKeyword(int pageNum, int pageSize, String keyword) throws IOException;
 }

@@ -18,7 +18,7 @@ public interface TBlogMapper extends BaseMapper<TBlog> {
 
     int updateBlogById(TBlog blog);
 
-    List<TBlog> getPage(Integer start, Integer end, TBlog tBlog);
+    List<TBlog> getPage(Integer start, Integer pageSize, TBlog tBlog);
 }
 
 

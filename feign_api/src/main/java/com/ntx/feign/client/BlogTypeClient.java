@@ -1,12 +1,11 @@
 package com.ntx.feign.client;
 
+
 import com.ntx.feign.domain.TBlogType;
-import org.ntx.common.domain.Result;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
-
 import java.util.List;
 
 /**

@@ -12,9 +12,8 @@ import com.ntx.user.domain.TUser;
 import com.ntx.user.mapper.TUserMapper;
 import com.ntx.user.service.TUserService;
 import com.ntx.user.common.ImageVerificationCode;
-import org.ntx.common.domain.Result;
+import com.ntx.common.domain.Result;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -22,13 +21,11 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.HttpCookie;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
 
 import static com.ntx.user.common.RedisConstant.*;
 

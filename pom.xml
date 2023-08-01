@@ -14,10 +14,11 @@
         <module>blog</module>
         <module>blogType</module>
 <!--        <module>eureka-server</module>-->
-        <module>feign_api</module>
-        <module>common</module>
         <module>upload</module>
         <module>showImage</module>
+        <module>common</module>
+        <module>feign_api</module>
+
     </modules>
     <!--版本过高会和nacos冲突-->
     <parent>
@@ -198,6 +199,13 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
+        </dependency>
+
+        <!--FastJson-->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+            <version>1.2.71</version>
         </dependency>
 <!--Json反序列化-->
         <dependency>

@@ -3,11 +3,12 @@ package com.ntx.user.controller;
 import com.ntx.user.domain.LoginForm;
 import com.ntx.user.domain.TUser;
 import com.ntx.user.service.TUserService;
-import org.ntx.common.domain.Result;
+import com.ntx.common.domain.Result;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.io.IOException;
+import java.util.List;
 
 @RestController
 @RequestMapping("/user")
@@ -43,5 +44,10 @@ public class UserController {
     @GetMapping("/phoneCode")
     public Result phoneCode(String phone){
         return userService.phoneCode(phone);
+    }
+
+    @GetMapping("/getByIds")
+    public List<TUser> getByIds(@RequestParam List<Integer> ids){
+        return userService.listByIds(ids);
     }
 }

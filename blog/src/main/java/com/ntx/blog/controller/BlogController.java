@@ -1,20 +1,19 @@
 package com.ntx.blog.controller;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.api.R;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ntx.blog.domain.TBlog;
 import com.ntx.blog.dto.BlogDTO;
 import com.ntx.blog.service.TBlogService;
 import com.ntx.feign.client.BlogTypeClient;
+
+import com.ntx.common.domain.Result;
 import com.ntx.feign.domain.TBlogType;
-import jodd.util.ArraysUtil;
-import org.ntx.common.domain.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +31,7 @@ public class BlogController {
     // feign用于远程调用
     @Autowired
     private BlogTypeClient blogTypeClient ;
+
 
     /**
      * 使用restTemplate用于远程调用
@@ -126,6 +126,8 @@ public class BlogController {
         return Result.success(page);
     }
 
+
+
     /**
      * 更新blog信息
      * @param blog
@@ -141,6 +143,22 @@ public class BlogController {
         else{
             return Result.error("修改失败");
         }
+    }
+
+    /**
+     * 使用es进行查询
+     * @param pageNum
+     * @param pageSize
+     * @param keyword
+     * @return
+     * @throws IOException
+     */
+    @GetMapping("/queryByKeyword")
+    public Result queryByKeyWord(@RequestParam(required = false, defaultValue = "1") int pageNum,
+                                 @RequestParam(required = false, defaultValue = "10") int pageSize,
+                                 @RequestParam(required = false) String keyword) throws IOException {
+
+        return blogService.queryByKeyword(pageNum, pageSize, keyword);
     }
 
 

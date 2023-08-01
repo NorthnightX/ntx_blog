@@ -1,4 +1,4 @@
-package org.ntx.common.commons;
+package com.ntx.common.commons;
 
 /**
  * 系统常量

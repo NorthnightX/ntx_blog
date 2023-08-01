@@ -2,8 +2,8 @@ package com.ntx.user.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.ntx.user.domain.LoginForm;
+import com.ntx.common.domain.Result;
 import com.ntx.user.domain.TUser;
-import org.ntx.common.domain.Result;
 
 import java.io.IOException;
 

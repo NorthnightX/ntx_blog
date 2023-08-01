@@ -1,14 +1,32 @@
 package com.ntx.blog.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.ntx.blog.domain.TBlog;
+import com.ntx.blog.dto.BlogDTO;
 import com.ntx.blog.mapper.TBlogMapper;
 import com.ntx.blog.service.TBlogService;
+import org.apache.lucene.search.TotalHits;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.SearchHits;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
+import com.ntx.common.domain.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
 * @author NorthnightX
@@ -21,6 +39,9 @@ public  class TBlogServiceImpl extends ServiceImpl<TBlogMapper, TBlog>
 
     @Autowired
     private TBlogMapper blogMapper;
+
+    @Autowired
+    private RestHighLevelClient client;
     @Override
     public int updateBlodById(TBlog blog) {
         return blogMapper.updateBlogById(blog);
@@ -36,9 +57,58 @@ public  class TBlogServiceImpl extends ServiceImpl<TBlogMapper, TBlog>
     public List<TBlog> getPage(Integer pageNum, Integer pageSize, TBlog tBlog) {
 
         int start = (pageNum - 1) * pageSize;
-        int end = pageNum * pageSize;
-        return blogMapper.getPage(start, end, tBlog);
+        return blogMapper.getPage(start, pageSize, tBlog);
     }
+
+    @Override
+    public Result queryByKeyword(int pageNum, int pageSize, String keyword) throws IOException {
+        //1.准备request
+        SearchRequest request = new SearchRequest("blog");
+        //2.写dsl语句
+        //添加过滤条件，私有的，删除的，状态异常的不显示给用户
+        BoolQueryBuilder booledQuery = QueryBuilders.boolQuery();
+        booledQuery.must(QueryBuilders.termQuery("text", keyword)).
+                must(QueryBuilders.termQuery("isPublic", 1)).
+                must(QueryBuilders.termQuery("status", 1)).
+                must(QueryBuilders.termQuery("deleted", 1));
+        request.source().query(booledQuery);
+        request.source().size(pageSize).from((pageNum - 1) * pageSize);
+        request.source().highlighter(new HighlightBuilder().
+                field("title").
+                field("content").requireFieldMatch(false));
+        //3.查询
+        SearchResponse response = client.search(request, RequestOptions.DEFAULT);
+        //数据处理
+        SearchHits searchHits = response.getHits();
+        TotalHits totalHits = searchHits.getTotalHits();
+        long value = totalHits.value;
+        SearchHit[] hits = searchHits.getHits();
+        List<BlogDTO> list = new ArrayList<>();
+        for (SearchHit hit : hits) {
+            String json = hit.getSourceAsString();
+            BlogDTO blogDTO = JSON.parseObject(json, BlogDTO.class);
+            Map<String, HighlightField> highlightFields =
+                    hit.getHighlightFields();
+            if(!CollectionUtils.isEmpty(highlightFields)){
+                HighlightField highlightFieldContent = highlightFields.get("content");
+                HighlightField highlightFieldTitle = highlightFields.get("title");
+                if(highlightFieldContent != null){
+                    String content = highlightFieldContent.getFragments()[0].string();
+                    blogDTO.setContent(content);
+                }
+                if(highlightFieldTitle != null){
+                    String title = highlightFieldTitle.getFragments()[0].string();
+                    blogDTO.setTitle(title);
+                }
+            }
+            list.add(blogDTO);
+        }
+        Page<BlogDTO> page = new Page<>(pageNum, pageSize);
+        page.setTotal(value);
+        page.setRecords(list);
+        return Result.success(page);
+    }
+
 }
 
 

@@ -30,6 +30,6 @@
                         name like #{name}
                     </if>
                  </where>
-                 limit #{start}, #{end}
+                 limit #{start}, #{pageSize}
     </select>
 </mapper>

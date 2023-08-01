@@ -1,7 +1,7 @@
 package com.ntx.upload.controller;
 
 import cn.hutool.core.util.StrUtil;
-import org.ntx.common.domain.Result;
+import com.ntx.common.domain.Result;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;

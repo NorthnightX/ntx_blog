@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.ntx.user.domain.TUser;
 import org.apache.ibatis.annotations.Mapper;
 
+
 /**
 * @author NorthnightX
 * @description 针对表【t_user】的数据库操作Mapper

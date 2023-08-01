@@ -20,7 +20,7 @@ public interface TBlogTypeMapper extends BaseMapper<TBlogType> {
 
     List<TBlogType> getByIds(List<Long> ids);
 
-    List<TBlogType> queryBlogPage(int start, int end, String name);
+    List<TBlogType> queryBlogPage(int start, int pageSize, String name);
 }
 
 

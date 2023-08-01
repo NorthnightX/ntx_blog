@@ -46,6 +46,6 @@
             and type_id = #{tBlog.typeId}
         </if>
         </where>
-        limit #{start}, #{end}
+        limit #{start}, #{pageSize}
     </select>
 </mapper>

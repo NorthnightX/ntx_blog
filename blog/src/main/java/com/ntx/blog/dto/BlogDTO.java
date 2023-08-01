@@ -58,4 +58,11 @@ public class BlogDTO {
      * 更新时间
      */
     private LocalDateTime gmtModified;
+    private Integer bloggerId;
+    private String bloggerName;
+    private Integer isPublic;
+    private Integer comment;
+    private Integer like;
+    private Integer stamp;
+    private Integer collect;
 }
