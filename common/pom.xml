@@ -37,6 +37,7 @@
                 </executions>
                 <configuration>
                     <classifier>execute</classifier>
+                    <skip>true</skip>
                 </configuration>
             </plugin>
         </plugins>

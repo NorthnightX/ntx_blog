@@ -1,7 +1,7 @@
 package com.ntx.user.controller;
 
+import com.ntx.common.domain.TUser;
 import com.ntx.user.domain.LoginForm;
-import com.ntx.user.domain.TUser;
 import com.ntx.user.service.TUserService;
 import com.ntx.common.domain.Result;
 import org.springframework.web.bind.annotation.*;

@@ -1,7 +1,8 @@
-package com.ntx.feign.client;
+package com.ntx.client;
 
 
-import com.ntx.feign.domain.TUser;
+
+import com.ntx.common.domain.TUser;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;

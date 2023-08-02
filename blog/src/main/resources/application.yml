@@ -46,6 +46,8 @@ spring:
 #      host: 192.168.80.128
   jackson: #json转换配置
     default-property-inclusion: non_null
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
 
   servlet:
     multipart: #文件上传

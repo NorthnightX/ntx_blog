@@ -1,4 +1,4 @@
-package com.ntx.feign.domain;
+package com.ntx.common.domain;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;

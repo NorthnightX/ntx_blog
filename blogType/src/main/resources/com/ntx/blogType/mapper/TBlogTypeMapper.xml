@@ -5,7 +5,7 @@
 <mapper namespace="com.ntx.blogType.mapper.TBlogTypeMapper">
 
 
-    <select id="getTypeById" resultType="com.ntx.blogType.domain.TBlogType">
+    <select id="getTypeById" resultType="com.ntx.common.domain.TBlogType">
 
 
         select * from t_blog_type
@@ -14,7 +14,7 @@
         </where>
 
     </select>
-    <select id="getByIds" resultType="com.ntx.blogType.domain.TBlogType">
+    <select id="getByIds" resultType="com.ntx.common.domain.TBlogType">
         select id, name from t_blog_type
         <where>
             id in
@@ -23,7 +23,7 @@
             </foreach>
         </where>
     </select>
-    <select id="queryBlogPage" resultType="com.ntx.blogType.domain.TBlogType">
+    <select id="queryBlogPage" resultType="com.ntx.common.domain.TBlogType">
         select * from t_blog_type
                  <where>
                     <if test="name.length > 0">

@@ -5,7 +5,7 @@
 <mapper namespace="com.ntx.user.mapper.TUserMapper">
 
 
-    <select id="queryUserById" resultType="com.ntx.user.domain.TUser">
+    <select id="queryUserById" resultType="com.ntx.common.domain.TUser">
         select * from t_user
         <where>
             id = #{id}

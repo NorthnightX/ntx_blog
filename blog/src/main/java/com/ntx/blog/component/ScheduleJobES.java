@@ -5,10 +5,11 @@ import com.alibaba.fastjson.JSON;
 import com.ntx.blog.domain.TBlog;
 import com.ntx.blog.dto.BlogDTO;
 import com.ntx.blog.service.TBlogService;
-import com.ntx.feign.client.BlogTypeClient;
-import com.ntx.feign.client.UserClient;
-import com.ntx.feign.domain.TBlogType;
-import com.ntx.feign.domain.TUser;
+import com.ntx.client.BlogTypeClient;
+import com.ntx.client.UserClient;
+import com.ntx.common.domain.TBlogType;
+import com.ntx.common.domain.TUser;
+
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.RequestOptions;
@@ -46,9 +47,10 @@ public class ScheduleJobES {
         List<Integer> typeIdList = list.stream().map(TBlog::getTypeId).collect(Collectors.toList());
         List<Integer> bloggerIdList = list.stream().map(TBlog::getBlogger).collect(Collectors.toList());
         List<TBlogType> byTypeIds = blogTypeClient.getByTypeIds(typeIdList);
+        System.out.println(byTypeIds);
         List<TUser> userList = userClient.getByIds(bloggerIdList);
-        Map<Integer, String> userNameMap =
-                userList.stream().collect(Collectors.toMap(TUser::getId, TUser::getName));
+        Map<Integer, TUser> userMap =
+                userList.stream().collect(Collectors.toMap(TUser::getId, tUser -> tUser));
         Map<Integer, String> typeMap =
                 byTypeIds.stream().collect(Collectors.toMap(TBlogType::getId, TBlogType::getName));
 
@@ -56,8 +58,12 @@ public class ScheduleJobES {
         list.forEach((blog) -> {
             BlogDTO blogDTO = new BlogDTO();
             BeanUtil.copyProperties(blog, blogDTO);
+            blogDTO.setBloggerId(blog.getBlogger());
             blogDTO.setTypeName(typeMap.get(blogDTO.getTypeId()));
-            blogDTO.setBloggerName(userNameMap.get(blogDTO.getBloggerId()));
+            TUser user = userMap.get(blog.getBlogger());
+            blogDTO.setBloggerImage(user.getImage());
+            blogDTO.setBloggerId(user.getId());
+            blogDTO.setBloggerName(user.getName());
             request.add(new IndexRequest("blog").
                     id(String.valueOf(blogDTO.getId())).
                     source(JSON.toJSONString(blogDTO), XContentType.JSON));

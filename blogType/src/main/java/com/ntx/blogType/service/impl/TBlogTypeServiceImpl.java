@@ -2,10 +2,10 @@ package com.ntx.blogType.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 
-import com.ntx.blogType.domain.TBlogType;
 import com.ntx.blogType.mapper.TBlogTypeMapper;
 import com.ntx.blogType.service.TBlogTypeService;
 
+import com.ntx.common.domain.TBlogType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

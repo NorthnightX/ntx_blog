@@ -1,7 +1,7 @@
 package com.ntx.user.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.ntx.user.domain.TUser;
+import com.ntx.common.domain.TUser;
 import org.apache.ibatis.annotations.Mapper;
 
 

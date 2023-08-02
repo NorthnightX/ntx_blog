@@ -6,10 +6,13 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ntx.blog.domain.TBlog;
 import com.ntx.blog.dto.BlogDTO;
 import com.ntx.blog.service.TBlogService;
-import com.ntx.feign.client.BlogTypeClient;
 
+
+import com.ntx.client.BlogTypeClient;
+import com.ntx.client.UserClient;
 import com.ntx.common.domain.Result;
-import com.ntx.feign.domain.TBlogType;
+import com.ntx.common.domain.TBlogType;
+import com.ntx.common.domain.TUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,6 +34,9 @@ public class BlogController {
     // feign用于远程调用
     @Autowired
     private BlogTypeClient blogTypeClient ;
+
+    @Autowired
+    private UserClient userClient;
 
 
     /**
@@ -107,7 +113,15 @@ public class BlogController {
         if(typeIds.size() == 0){
             return Result.error("找不到指定内容");
         }
+        //异步调用blogTypeClient获取数据
         List<TBlogType> byTypeIds = blogTypeClient.getByTypeIds(typeIds);
+
+        //获取用户数据
+        List<Integer> userList = pageInfo.stream().map(TBlog::getBlogger).
+                distinct().collect(Collectors.toList());
+        List<TUser> users = userClient.getByIds(userList);
+        Map<Integer, TUser> tUserMap = users.stream().collect(Collectors.toMap(TUser::getId, tUser -> tUser));
+        //获取blogType的数据
         Map<Integer, String> typesMap = byTypeIds.stream().
                 collect(Collectors.toMap(TBlogType::getId, TBlogType::getName));
         //将结果转成map
@@ -115,6 +129,10 @@ public class BlogController {
         List<BlogDTO> blogDTOList = pageInfo.stream().map((item) -> {
             BlogDTO blogDTO = new BlogDTO();
             BeanUtil.copyProperties(item, blogDTO);
+            TUser user = tUserMap.get(item.getBlogger());
+            blogDTO.setBloggerId(user.getId());
+            blogDTO.setBloggerName(user.getName());
+            blogDTO.setBloggerImage(user.getImage());
             blogDTO.setTypeName(typesMap.get(blogDTO.getTypeId()));
             return blogDTO;
         }).collect(Collectors.toList());

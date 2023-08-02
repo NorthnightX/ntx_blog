@@ -2,8 +2,6 @@ package com.ntx.blog;
 
 import com.netflix.loadbalancer.IRule;
 import com.netflix.loadbalancer.RandomRule;
-import com.ntx.feign.client.BlogTypeClient;
-import com.ntx.feign.client.UserClient;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
@@ -16,7 +14,7 @@ import org.springframework.web.client.RestTemplate;
 
 @SpringBootApplication
 @EnableDiscoveryClient //添加注册中心支持
-@EnableFeignClients(clients = {BlogTypeClient.class, UserClient.class}) //开启feign支持，指定扫描包
+@EnableFeignClients(basePackages = ("com.ntx.client")) //开启feign支持，指定扫描包
 @EnableScheduling
 public class BlogApplication {
     public static void main(String[] args) {
@@ -28,7 +26,7 @@ public class BlogApplication {
      * 负载均衡
      * @return
      */
-    @Bean
+//    @Bean
     public IRule randomRule(){
         return new RandomRule();
     }
@@ -37,8 +35,8 @@ public class BlogApplication {
      *  远程调用,注册成bean，便于后续调用，开启负载均衡
      * @return
      */
-    @Bean
-    @LoadBalanced
+//    @Bean
+//    @LoadBalanced
     public RestTemplate restTemplate(){
         return new RestTemplate();
     }

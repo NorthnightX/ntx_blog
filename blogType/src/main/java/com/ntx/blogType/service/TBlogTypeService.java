@@ -2,7 +2,7 @@ package com.ntx.blogType.service;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.ntx.blogType.domain.TBlogType;
+import com.ntx.common.domain.TBlogType;
 
 import java.util.List;
 

@@ -2,9 +2,9 @@ package com.ntx.blogType.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.ntx.blogType.domain.TBlogType;
 import com.ntx.blogType.service.TBlogTypeService;
 import com.ntx.common.domain.Result;
+import com.ntx.common.domain.TBlogType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -60,8 +60,9 @@ public class BlogTypeController {
      */
     @GetMapping("/getByTypeIds")
     public List<TBlogType> getByTypeIds(@RequestParam List<Long> ids){
-        List<TBlogType> tBlogTypes = blogTypeService.getByIds(ids);
-        return tBlogTypes;
+        List<TBlogType> list = blogTypeService.getByIds(ids);
+        System.out.println(list);
+        return list;
     }
 
     /**

@@ -2,7 +2,7 @@ package com.ntx.blogType.mapper;
 
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.ntx.blogType.domain.TBlogType;
+import com.ntx.common.domain.TBlogType;
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
