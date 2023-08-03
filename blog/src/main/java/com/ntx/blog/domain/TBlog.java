@@ -4,13 +4,11 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
-import org.springframework.format.annotation.DateTimeFormat;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Date;
+import java.util.Vector;
 
 /**
  * 
@@ -18,13 +16,12 @@ import java.util.Date;
  */
 @TableName(value ="t_blog")
 @Data
-public class TBlog implements Serializable {
+public  class TBlog implements Serializable {
     /**
      * 博客编号
      */
     @TableId(type = IdType.AUTO)
     private Integer id;
-
     /**
      * 博客标题
      */
@@ -81,5 +78,7 @@ public class TBlog implements Serializable {
 
     @TableField(exist = false)
     private  static final long serialVersionUID = 1L;
+
+
 
 }

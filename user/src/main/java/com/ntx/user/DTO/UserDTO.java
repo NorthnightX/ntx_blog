@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
+
 @Data
 public class UserDTO {
     @TableId(type = IdType.AUTO)
@@ -37,5 +39,6 @@ public class UserDTO {
      * 用户头像
      */
     private String image;
+
 
 }

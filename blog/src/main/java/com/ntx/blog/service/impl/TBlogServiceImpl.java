@@ -8,10 +8,13 @@ import com.ntx.blog.dto.BlogDTO;
 import com.ntx.blog.mapper.TBlogMapper;
 import com.ntx.blog.service.TBlogService;
 import org.apache.lucene.search.TotalHits;
+import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
@@ -24,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -67,15 +71,14 @@ public  class TBlogServiceImpl extends ServiceImpl<TBlogMapper, TBlog>
         //2.写dsl语句
         //添加过滤条件，私有的，删除的，状态异常的不显示给用户
         BoolQueryBuilder booledQuery = QueryBuilders.boolQuery();
-        booledQuery.must(QueryBuilders.termQuery("text", keyword)).
+        booledQuery.must(QueryBuilders.matchQuery("text", keyword)).
                 must(QueryBuilders.termQuery("isPublic", 1)).
                 must(QueryBuilders.termQuery("status", 1)).
                 must(QueryBuilders.termQuery("deleted", 1));
         request.source().query(booledQuery);
         request.source().size(pageSize).from((pageNum - 1) * pageSize);
         request.source().highlighter(new HighlightBuilder().
-                field("title").
-                field("content").requireFieldMatch(false));
+                field("title").requireFieldMatch(false));
         //3.查询
         SearchResponse response = client.search(request, RequestOptions.DEFAULT);
         //数据处理
@@ -90,12 +93,7 @@ public  class TBlogServiceImpl extends ServiceImpl<TBlogMapper, TBlog>
             Map<String, HighlightField> highlightFields =
                     hit.getHighlightFields();
             if(!CollectionUtils.isEmpty(highlightFields)){
-                HighlightField highlightFieldContent = highlightFields.get("content");
                 HighlightField highlightFieldTitle = highlightFields.get("title");
-                if(highlightFieldContent != null){
-                    String content = highlightFieldContent.getFragments()[0].string();
-                    blogDTO.setContent(content);
-                }
                 if(highlightFieldTitle != null){
                     String title = highlightFieldTitle.getFragments()[0].string();
                     blogDTO.setTitle(title);
@@ -107,6 +105,33 @@ public  class TBlogServiceImpl extends ServiceImpl<TBlogMapper, TBlog>
         page.setTotal(value);
         page.setRecords(list);
         return Result.success(page);
+    }
+
+    @Override
+    public Result saveBlog(TBlog blog) throws IOException {
+        //保存到数据库
+        blog.setGmtModified(LocalDateTime.now());
+        blog.setGmtModified(LocalDateTime.now());
+        blog.setComment(0);
+        blog.setLikeCount(0);
+        blog.setStampCount(0);
+        blog.setCollectCount(0);
+        blog.setClickCount(0);
+        blog.setDeleted(1);
+        blog.setStatus(1);
+        boolean save = save(blog);
+        if(!save){
+            return Result.error("保存失败");
+        }
+        //保存到ES
+        //创建request
+        IndexRequest request = new IndexRequest("blog").id(blog.getId().toString());
+        //准备json数据
+        request.source(JSON.toJSONString(blog), XContentType.JSON);
+        //发送请求
+        IndexResponse index = client.index(request, RequestOptions.DEFAULT);
+        return index.status().getStatus() == 201 ? Result.success("保存成功") : Result.error("保存失败");
+
     }
 
 }

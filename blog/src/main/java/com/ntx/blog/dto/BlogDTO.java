@@ -56,7 +56,7 @@ public class BlogDTO {
      */
     @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
     @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    private LocalDateTime gmtCreate;
+        private LocalDateTime gmtCreate;
 
     /**
      * 更新时间

@@ -179,5 +179,13 @@ public class BlogController {
         return blogService.queryByKeyword(pageNum, pageSize, keyword);
     }
 
-
+    /**
+     * 保存blog
+     * @param blog
+     * @return
+     */
+    @PostMapping("/addBlog")
+    public Result addBlog(@RequestBody TBlog blog) throws IOException {
+        return blogService.saveBlog(blog);
+    }
 }

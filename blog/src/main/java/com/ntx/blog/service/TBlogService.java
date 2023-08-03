@@ -19,4 +19,6 @@ public interface TBlogService extends IService<TBlog> {
     List<TBlog> getPage(Integer pageNum, Integer pageSize, TBlog tBlog);
 
     Result queryByKeyword(int pageNum, int pageSize, String keyword) throws IOException;
+
+    Result saveBlog(TBlog blog) throws IOException;
 }
