@@ -16,7 +16,7 @@
             <option name="ignoreTablePrefix" value="" />
             <option name="ignoreTableSuffix" value="" />
             <option name="moduleName" value="blog" />
-            <option name="modulePath" value="$PROJECT_DIR$/blog" />
+            <option name="modulePath" value="$PROJECT_DIR$" />
             <option name="moduleUIInfoList">
               <list>
                 <ModuleInfoGo>
@@ -26,7 +26,7 @@
                   <option name="encoding" value="${domain.encoding}" />
                   <option name="fileName" value="${domain.fileName}Mapper" />
                   <option name="fileNameWithSuffix" value="${domain.fileName}Mapper.java" />
-                  <option name="modulePath" value="$PROJECT_DIR$/blog" />
+                  <option name="modulePath" value="$PROJECT_DIR$" />
                   <option name="packageName" value="${domain.basePackage}.mapper" />
                 </ModuleInfoGo>
                 <ModuleInfoGo>
@@ -36,7 +36,7 @@
                   <option name="encoding" value="${domain.encoding}" />
                   <option name="fileName" value="${domain.fileName}Mapper" />
                   <option name="fileNameWithSuffix" value="${domain.fileName}Mapper.xml" />
-                  <option name="modulePath" value="$PROJECT_DIR$/blog" />
+                  <option name="modulePath" value="$PROJECT_DIR$" />
                   <option name="packageName" value="mapper" />
                 </ModuleInfoGo>
                 <ModuleInfoGo>
@@ -46,7 +46,7 @@
                   <option name="encoding" value="${domain.encoding}" />
                   <option name="fileName" value="${domain.fileName}ServiceImpl" />
                   <option name="fileNameWithSuffix" value="${domain.fileName}ServiceImpl.java" />
-                  <option name="modulePath" value="$PROJECT_DIR$/blog" />
+                  <option name="modulePath" value="$PROJECT_DIR$" />
                   <option name="packageName" value="${domain.basePackage}.service.impl" />
                 </ModuleInfoGo>
                 <ModuleInfoGo>
@@ -56,7 +56,7 @@
                   <option name="encoding" value="${domain.encoding}" />
                   <option name="fileName" value="${domain.fileName}Service" />
                   <option name="fileNameWithSuffix" value="${domain.fileName}Service.java" />
-                  <option name="modulePath" value="$PROJECT_DIR$/blog" />
+                  <option name="modulePath" value="$PROJECT_DIR$" />
                   <option name="packageName" value="${domain.basePackage}.service" />
                 </ModuleInfoGo>
               </list>
@@ -69,12 +69,12 @@
             <option name="tableUIInfoList">
               <list>
                 <TableUIInfo>
-                  <option name="className" value="TComment" />
-                  <option name="tableName" value="t_comment" />
+                  <option name="className" value="TDislikeBlog" />
+                  <option name="tableName" value="t_dislike_blog" />
                 </TableUIInfo>
                 <TableUIInfo>
-                  <option name="className" value="TCollectBlog" />
-                  <option name="tableName" value="t_collect_blog" />
+                  <option name="className" value="TLikeBlog" />
+                  <option name="tableName" value="t_like_blog" />
                 </TableUIInfo>
               </list>
             </option>

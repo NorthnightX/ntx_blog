@@ -32,7 +32,6 @@ public class ShowController {
     @GetMapping("/**")
     public ResponseEntity<InputStreamResource> showImage(HttpServletRequest httpServletRequest) throws IOException {
         StringBuffer requestURL = httpServletRequest.getRequestURL();
-        System.out.println("请求的URL：" + requestURL.toString());
         // 获取文件名部分
         String fileName = extractFileNameFromURL(requestURL.toString());
         // 拼接本地文件路径

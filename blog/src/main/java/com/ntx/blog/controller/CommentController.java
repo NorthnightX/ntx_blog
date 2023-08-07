@@ -38,16 +38,15 @@ public class CommentController {
     }
 
     /**
-     * 查找评论
+     * 查找BLog对应的评论
      * @param id
      * @return
      */
     @GetMapping("/getCommentByBlog/{id}")
     public Result queryCommentByBlogId(@PathVariable int id){
-        LambdaQueryWrapper<TComment> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(TComment::getBlogId, id);
-        List<TComment> list = commentService.list(queryWrapper);
-        return Result.success(list);
+        return commentService.getCommentByBlog(id);
     }
+
+
 
 }

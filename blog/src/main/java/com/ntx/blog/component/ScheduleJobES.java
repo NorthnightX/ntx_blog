@@ -53,7 +53,6 @@ public class ScheduleJobES {
                 userList.stream().collect(Collectors.toMap(TUser::getId, tUser -> tUser));
         Map<Integer, String> typeMap =
                 byTypeIds.stream().collect(Collectors.toMap(TBlogType::getId, TBlogType::getName));
-
         //填充数据
         list.forEach((blog) -> {
             BlogDTO blogDTO = new BlogDTO();

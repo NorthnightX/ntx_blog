@@ -86,6 +86,9 @@ public class TUserServiceImpl extends ServiceImpl<TUserMapper, TUser> implements
         LambdaQueryWrapper<TUser> userLambdaQueryWrapper = new LambdaQueryWrapper<>();
         userLambdaQueryWrapper.eq(TUser::getName, loginForm.getUsername());
         TUser user = this.getOne(userLambdaQueryWrapper);
+        if(user == null){
+            return Result.error("未找到此用户");
+        }
         //如果密码相等
         if (user.getPassword().equals(MD5Password)) {
             UserDTO userDTO = setUserInfoForReturn(user);
