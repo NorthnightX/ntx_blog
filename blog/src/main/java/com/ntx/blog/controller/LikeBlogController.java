@@ -25,4 +25,14 @@ public class LikeBlogController {
     public Result likeBlog(@RequestBody TLikeBlog likeBlog){
         return likeBlogService.likeBlog(likeBlog);
     }
+
+    /**
+     * 查找用户喜欢的文章
+     * @param userId
+     * @return
+     */
+    @GetMapping("/queryLikeByUser")
+    public Result queryLikeByUser(@RequestParam Integer userId){
+        return likeBlogService.queryLikeByUser(userId);
+    }
 }

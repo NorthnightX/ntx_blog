@@ -13,4 +13,6 @@ import com.ntx.common.domain.Result;
 public interface TLikeBlogService extends IService<TLikeBlog> {
 
     Result likeBlog(TLikeBlog likeBlog);
+
+    Result queryLikeByUser(Integer userId);
 }

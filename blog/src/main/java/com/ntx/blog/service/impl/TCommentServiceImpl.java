@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -78,6 +79,10 @@ public class TCommentServiceImpl extends ServiceImpl<TCommentMapper, TComment>
         queryWrapper.eq(TComment::getDeleted, 1);
         List<TComment> list = this.list(queryWrapper);
         List<Integer> userIdList = list.stream().map(TComment::getUserId).distinct().collect(Collectors.toList());
+        //没评论，直接返回
+        if(userIdList.isEmpty()){
+            return Result.success(new ArrayList<>());
+        }
         List<TUser> userList = userClient.getByIds(userIdList);
         Map<Integer, TUser> userMap = userList.stream().collect(Collectors.toMap(TUser::getId, tUser -> tUser));
         //填充DTO对象

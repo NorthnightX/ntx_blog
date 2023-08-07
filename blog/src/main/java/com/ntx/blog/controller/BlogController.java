@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -65,19 +66,25 @@ public class BlogController {
      * @param id
      * @return
      */
-    @GetMapping("/getBlogById")
-    public BlogDTO getBlogById(@RequestParam int id,
-                               @RequestHeader(value = "NTX", required = false) String NTX) {
+    @GetMapping("/getBlogById/{id}")
+    public Result getBlogById(@PathVariable int id) {
         BlogDTO blogDTO = new BlogDTO();
         TBlog blog = blogService.getById(id);
         Integer typeId = blog.getTypeId();
-        System.out.println("ntx:" + NTX);
         TBlogType blogType = blogTypeClient.getByTypeId(typeId);
         if (blogType != null) {
             blogDTO.setTypeName(blogType.getName());
         }
+        Integer blogger = blog.getBlogger();
+        List<Integer> list = new ArrayList<>();
+        list.add(blogger);
+        List<TUser> userList = userClient.getByIds(list);
         BeanUtil.copyProperties(blog, blogDTO);
-        return blogDTO;
+        Map<Integer, TUser> userMap = userList.stream().collect(Collectors.toMap(TUser::getId, tUser -> tUser));
+        blogDTO.setBloggerName(userMap.get(blogger).getName());
+        blogDTO.setBloggerImage(userMap.get(blogger).getImage());
+        blogDTO.setBloggerId(blogger);
+        return Result.success(blogDTO);
     }
 
     /**

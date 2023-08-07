@@ -63,6 +63,7 @@ public class ScheduleJobES {
             blogDTO.setBloggerImage(user.getImage());
             blogDTO.setBloggerId(user.getId());
             blogDTO.setBloggerName(user.getName());
+            //index方式会替换掉原本的文档，create如果文档存在会返回错误，update是局部更新
             request.add(new IndexRequest("blog").
                     id(String.valueOf(blogDTO.getId())).
                     source(JSON.toJSONString(blogDTO), XContentType.JSON));
