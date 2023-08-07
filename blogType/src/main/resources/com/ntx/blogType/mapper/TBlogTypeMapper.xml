@@ -32,4 +32,10 @@
                  </where>
                  limit #{start}, #{pageSize}
     </select>
+    <select id="queryByBlogger" resultType="com.ntx.common.domain.TBlogType">
+        select * from t_blog_type
+        <where>
+            blogger = #{blogger}
+    </where>
+    </select>
 </mapper>

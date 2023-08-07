@@ -2,10 +2,7 @@ package com.ntx.upload.controller;
 
 import cn.hutool.core.util.StrUtil;
 import com.ntx.common.domain.Result;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -40,6 +37,26 @@ public class UploadController {
         }
     }
 
+    /**
+     * 上传文件
+     * @param image
+     * @return
+     */
+    @PostMapping("/uploadBlogImage")
+    public Result uploadBlogImage(@RequestBody MultipartFile image) {
+        try {
+            // 获取原始文件名称
+            String originalFilename = image.getOriginalFilename();
+            // 生成新文件名
+            String fileName = createNewFileName(originalFilename);
+            // 保存文件
+            image.transferTo(new File(IMAGE_UPLOAD_DIR, fileName));
+            // 返回结果
+            return Result.success("http://localhost:10100/image" + fileName);
+        } catch (IOException e) {
+            throw new RuntimeException("文件上传失败", e);
+        }
+    }
 
     /**
      * 创建文件

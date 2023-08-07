@@ -92,4 +92,29 @@ public class BlogTypeController {
         return Result.success(collect);
     }
 
+    /**
+     * 根据用户id查找分类
+     * @param id
+     * @return
+     */
+    @GetMapping("/getTypeByUser/{id}")
+    public Result getTypeByUser(@PathVariable int id){
+        return  blogTypeService.getTypeByUser(id);
+    }
+
+    /**
+     * 新增类型
+     * @param blogType
+     * @return
+     */
+    @PostMapping("/addType")
+    public Result addType(@RequestBody TBlogType blogType){
+        blogType.setGmtModified(LocalDateTime.now());
+        blogType.setGmtCreate(LocalDateTime.now());
+        blogType.setDeleted(1);
+        blogType.setStatus(1);
+        boolean save = blogTypeService.save(blogType);
+        return save ? Result.success("保存成功") : Result.error("保存失败");
+    }
+
 }

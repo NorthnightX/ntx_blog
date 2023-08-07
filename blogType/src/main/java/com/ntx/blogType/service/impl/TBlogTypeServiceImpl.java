@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.ntx.blogType.mapper.TBlogTypeMapper;
 import com.ntx.blogType.service.TBlogTypeService;
 
+import com.ntx.common.domain.Result;
 import com.ntx.common.domain.TBlogType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -47,6 +48,17 @@ public class TBlogTypeServiceImpl extends ServiceImpl<TBlogTypeMapper, TBlogType
     public List<TBlogType> getPage(Integer pageNum, Integer pageSize, String name) {
         int start = (pageNum - 1) * pageSize;
         return blogTypeMapper.queryBlogPage(start, pageSize, name);
+    }
+
+    /**
+     * 根据用户id查找type
+     * @param id
+     * @return
+     */
+    @Override
+    public Result getTypeByUser(int id) {
+        List<TBlogType> tBlogTypes = blogTypeMapper.queryByBlogger(id);
+        return Result.success(tBlogTypes);
     }
 }
 

@@ -2,6 +2,7 @@ package com.ntx.blogType.service;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.ntx.common.domain.Result;
 import com.ntx.common.domain.TBlogType;
 
 import java.util.List;
@@ -18,4 +19,6 @@ public interface TBlogTypeService extends IService<TBlogType> {
     List<TBlogType> getByIds(List<Long> ids);
 
     List<TBlogType> getPage(Integer pageNum, Integer pageSize, String name);
+
+    Result getTypeByUser(int id);
 }

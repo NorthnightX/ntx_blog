@@ -47,6 +47,10 @@ public class TBlogType implements Serializable {
      */
     private LocalDateTime gmtModified;
 
+    private Integer isPublic;
+
+    private Integer blogger;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 

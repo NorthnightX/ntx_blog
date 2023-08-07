@@ -2,6 +2,7 @@
 <project version="4">
   <component name="SqlDialectMappings">
     <file url="file://$PROJECT_DIR$/blog/src/main/resources/com/ntx/blog/mapper/TBlogMapper.xml" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/blog/src/main/resources/com/ntx/blog/mapper/TCommentMapper.xml" dialect="MySQL" />
     <file url="file://$PROJECT_DIR$/blogType/src/main/resources/com/ntx/blogType/mapper/TBlogTypeMapper.xml" dialect="MySQL" />
   </component>
 </project>
