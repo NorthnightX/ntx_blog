@@ -20,5 +20,5 @@ public interface TBlogService extends IService<TBlog> {
 
     Result queryByKeyword(int pageNum, int pageSize, String keyword) throws IOException;
 
-    Result saveBlog(TBlog blog) throws IOException;
+//    Result saveBlog(TBlog blog) throws IOException;
 }

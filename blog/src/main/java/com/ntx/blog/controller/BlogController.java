@@ -67,7 +67,7 @@ public class BlogController {
 
 
     /**
-     * 使用feign用于远程调用
+     *
      * 封装blogDTO返回，根据blogId查找其基本信息
      * @param id
      * @return
@@ -92,7 +92,7 @@ public class BlogController {
         blogDTO.setBloggerImage(userMap.get(blogger).getImage());
         blogDTO.setBloggerId(blogger);
         String jsonString = JSON.toJSONString(blog);
-        kafkaTemplate.send("blog",  "", jsonString);
+        kafkaTemplate.send("blogView",  "", jsonString);
         return Result.success(blogDTO);
     }
 
@@ -202,6 +202,10 @@ public class BlogController {
      */
     @PostMapping("/addBlog")
     public Result addBlog(@RequestBody TBlog blog) throws IOException {
-        return blogService.saveBlog(blog);
+
+        String jsonString = JSON.toJSONString(blog);
+        kafkaTemplate.send("blogAdd", "", jsonString);
+        return Result.success("发布成功");
+//        return blogService.saveBlog(blog);
     }
 }

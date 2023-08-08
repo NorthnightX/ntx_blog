@@ -7,6 +7,7 @@ import com.ntx.blog.domain.TBlog;
 import com.ntx.blog.dto.BlogDTO;
 import com.ntx.blog.mapper.TBlogMapper;
 import com.ntx.blog.service.TBlogService;
+import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.lucene.search.TotalHits;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
@@ -23,6 +24,7 @@ import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
 import com.ntx.common.domain.Result;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -46,6 +48,8 @@ public  class TBlogServiceImpl extends ServiceImpl<TBlogMapper, TBlog>
 
     @Autowired
     private RestHighLevelClient client;
+
+
     @Override
     public int updateBlodById(TBlog blog) {
         return blogMapper.updateBlogById(blog);
@@ -107,32 +111,32 @@ public  class TBlogServiceImpl extends ServiceImpl<TBlogMapper, TBlog>
         return Result.success(page);
     }
 
-    @Override
-    public Result saveBlog(TBlog blog) throws IOException {
-        //保存到数据库
-        blog.setGmtModified(LocalDateTime.now());
-        blog.setGmtModified(LocalDateTime.now());
-        blog.setComment(0);
-        blog.setLikeCount(0);
-        blog.setStampCount(0);
-        blog.setCollectCount(0);
-        blog.setClickCount(0);
-        blog.setDeleted(1);
-        blog.setStatus(1);
-        boolean save = save(blog);
-        if(!save){
-            return Result.error("保存失败");
-        }
-        //保存到ES
-        //创建request
-        IndexRequest request = new IndexRequest("blog").id(blog.getId().toString());
-        //准备json数据
-        request.source(JSON.toJSONString(blog), XContentType.JSON);
-        //发送请求
-        IndexResponse index = client.index(request, RequestOptions.DEFAULT);
-        return index.status().getStatus() == 201 ? Result.success("保存成功") : Result.error("保存失败");
-
-    }
+//    @Override
+//    public Result saveBlog(TBlog blog) throws IOException {
+//        //保存到数据库
+//        blog.setGmtModified(LocalDateTime.now());
+//        blog.setGmtModified(LocalDateTime.now());
+//        blog.setComment(0);
+//        blog.setLikeCount(0);
+//        blog.setStampCount(0);
+//        blog.setCollectCount(0);
+//        blog.setClickCount(0);
+//        blog.setDeleted(1);
+//        blog.setStatus(1);
+//        boolean save = save(blog);
+//        if(!save){
+//            return Result.error("保存失败");
+//        }
+//        //保存到ES
+//        //创建request
+//        IndexRequest request = new IndexRequest("blog").id(blog.getId().toString());
+//        //准备json数据
+//        request.source(JSON.toJSONString(blog), XContentType.JSON);
+//        //发送请求
+//        IndexResponse index = client.index(request, RequestOptions.DEFAULT);
+//        return index.status().getStatus() == 201 ? Result.success("保存成功") : Result.error("保存失败");
+//
+//    }
 
 }
 

@@ -62,7 +62,25 @@ spring:
     consumer:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      group-id: blog
+      group-id: blogView
+      enable-auto-commit: true
+      auto-commit-interval: 1000ms
+    consumer2:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      group-id: blogComment
+      enable-auto-commit: true
+      auto-commit-interval: 1000ms
+    consumer3:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      group-id: blogAdd
+      enable-auto-commit: true
+      auto-commit-interval: 1000ms
+    consumer4:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      group-id: blogLike
       enable-auto-commit: true
       auto-commit-interval: 1000ms
 
