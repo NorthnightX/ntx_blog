@@ -76,6 +76,7 @@ public class TLikeBlogServiceImpl extends ServiceImpl<TLikeBlogMapper, TLikeBlog
                 boolean update = blogService.update().setSql("like_count = like_count - 1").eq("id", likeBlog.getBlogId()).update();
                 if (update) {
                     Long remove1 = stringRedisTemplate.opsForSet().remove(BLOG_LIKE_KEY + likeBlog.getUserId(), blogId);
+                    ESUpdate(likeBlog.getBlogId(), -1);
                     return remove1 != null && remove1 > 0 ? Result.success("已取消点赞") : Result.error("网络异常");
                 }
             }
@@ -101,7 +102,7 @@ public class TLikeBlogServiceImpl extends ServiceImpl<TLikeBlogMapper, TLikeBlog
                     if (update) {
                         //向redis中添加用户的点赞信息
                         Long add = stringRedisTemplate.opsForSet().add(BLOG_LIKE_KEY + likeBlog.getUserId(), String.valueOf(likeBlog.getBlogId()));
-
+                        ESUpdate(likeBlog.getBlogId(), 1);
                         return add != null && add > 0 ? Result.success("点赞成功") : Result.error("网络异常");
                     }
                     return Result.error("网络异常");
@@ -122,6 +123,7 @@ public class TLikeBlogServiceImpl extends ServiceImpl<TLikeBlogMapper, TLikeBlog
             stringRedisTemplate.opsForSet().remove(BLOG_OPPOSE_KEY + likeBlog.getUserId(), blogId);
             //向用户点赞set添加数据
             stringRedisTemplate.opsForSet().add(BLOG_LIKE_KEY + likeBlog.getUserId(), String.valueOf(likeBlog.getBlogId()));
+            Boolean aBoolean = ESUpdate(likeBlog.getBlogId(), 1);
             return Result.success("点赞成功");
         }
         return Result.error("网络异常");
@@ -134,7 +136,7 @@ public class TLikeBlogServiceImpl extends ServiceImpl<TLikeBlogMapper, TLikeBlog
 
             // 使用 Script 方式更新 like_count 字段
             Script inlineScript = new Script(ScriptType.INLINE, "painless",
-                    "ctx._source.like_count += params.value", Collections.singletonMap("value", ops));
+                    "ctx._source.likeCount += params.value", Collections.singletonMap("value", ops));
             request.script(inlineScript);
 
             // 发送请求

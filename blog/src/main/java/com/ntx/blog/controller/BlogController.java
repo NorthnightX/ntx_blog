@@ -1,6 +1,7 @@
 package com.ntx.blog.controller;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ntx.blog.domain.TBlog;
@@ -13,7 +14,9 @@ import com.ntx.client.UserClient;
 import com.ntx.common.domain.Result;
 import com.ntx.common.domain.TBlogType;
 import com.ntx.common.domain.TUser;
+import org.apache.kafka.clients.producer.KafkaProducer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -38,6 +41,9 @@ public class BlogController {
 
     @Autowired
     private UserClient userClient;
+    @Autowired
+    private KafkaTemplate<String, String> kafkaTemplate;
+
 
 
     /**
@@ -79,11 +85,14 @@ public class BlogController {
         List<Integer> list = new ArrayList<>();
         list.add(blogger);
         List<TUser> userList = userClient.getByIds(list);
+        //设置返回DTO属性
         BeanUtil.copyProperties(blog, blogDTO);
         Map<Integer, TUser> userMap = userList.stream().collect(Collectors.toMap(TUser::getId, tUser -> tUser));
         blogDTO.setBloggerName(userMap.get(blogger).getName());
         blogDTO.setBloggerImage(userMap.get(blogger).getImage());
         blogDTO.setBloggerId(blogger);
+        String jsonString = JSON.toJSONString(blog);
+        kafkaTemplate.send("blog",  "", jsonString);
         return Result.success(blogDTO);
     }
 

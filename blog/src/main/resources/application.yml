@@ -53,6 +53,19 @@ spring:
     multipart: #文件上传
       max-file-size: 300MB
       max-request-size: 350MB
+  kafka:
+    bootstrap-servers: 192.168.203.131:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      group-id: blog
+      enable-auto-commit: true
+      auto-commit-interval: 1000ms
+
 
 mybatis-plus: #mp配置
   type-aliases-package: com.ntx.blog.entity
@@ -66,7 +79,11 @@ logging: #日志
 blogTypeService: #nacos负载均衡
   ribbon:
     NFLoadBalancerRuleClassName: com.alibaba.cloud.nacos.ribbon.NacosRule
-
+#
+##      props.put("bootstrap.servers", " 192.168.203.131:9092");
+##      props.put("acks", "all");
+##      props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+##      props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
 
 
 #eureka: #euraka ！不能和nacos同时配置
