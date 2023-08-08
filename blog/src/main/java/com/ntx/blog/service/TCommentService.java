@@ -11,7 +11,7 @@ import com.ntx.common.domain.Result;
 */
 public interface TCommentService extends IService<TComment> {
 
-    Result saveComment(TComment comment);
+//    Result saveComment(TComment comment);
 
     Result getCommentByBlog(int id);
 }

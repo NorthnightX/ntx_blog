@@ -3,7 +3,9 @@ package com.ntx.blog.service.impl;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.ntx.blog.domain.TBlog;
+import com.ntx.blog.domain.TComment;
 import com.ntx.blog.domain.TLikeBlog;
+import com.ntx.blog.mapper.TCommentMapper;
 import com.ntx.blog.service.TBlogService;
 import com.ntx.blog.service.TLikeBlogService;
 import com.ntx.common.domain.Result;
@@ -43,6 +45,8 @@ public class BlogKafkaQueryListener {
     private StringRedisTemplate stringRedisTemplate;
     @Autowired
     private TLikeBlogService likeBlogService;
+    @Autowired
+    private TCommentMapper commentMapper;
 
     /**
      * kafka的监听器,增加文章阅读量
@@ -96,10 +100,18 @@ public class BlogKafkaQueryListener {
     @KafkaListener(topics = "blogComment", groupId = "blogComment")
     public void topicListener3(ConsumerRecord<String, String> record) {
         String value = record.value();
-        TBlog tBlog = JSON.parseObject(value, TBlog.class);
-        tBlog.setClickCount(tBlog.getClickCount() + 1);
-        blogService.updateBlodById(tBlog);
+        TComment comment = JSON.parseObject(value, TComment.class);
+        comment.setDeleted(1);
+        comment.setCreateTime(LocalDateTime.now());
+        comment.setModifyTime(LocalDateTime.now());
+        Boolean save = commentMapper.saveComment(comment);
+        //评论完成后，将blog的评论数+1
+        if (save) {
+            blogService.update().setSql("comment = comment + 1").eq("id", comment.getBlogId()).update();
+        }
     }
+
+
 
     /**
      * 文章点赞功能

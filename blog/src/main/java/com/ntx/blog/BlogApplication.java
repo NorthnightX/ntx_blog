@@ -1,5 +1,6 @@
 package com.ntx.blog;
 
+import cn.hutool.log.Log;
 import com.netflix.loadbalancer.IRule;
 import com.netflix.loadbalancer.RandomRule;
 import org.springframework.boot.SpringApplication;
@@ -11,6 +12,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.logging.Logger;
+
 
 @SpringBootApplication
 @EnableDiscoveryClient //添加注册中心支持
@@ -19,6 +22,7 @@ import org.springframework.web.client.RestTemplate;
 public class BlogApplication {
     public static void main(String[] args) {
         SpringApplication.run(BlogApplication.class, args);
+
 
     }
 

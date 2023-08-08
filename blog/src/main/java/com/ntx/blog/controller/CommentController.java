@@ -1,5 +1,6 @@
 package com.ntx.blog.controller;
 
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.ntx.blog.domain.TComment;
 import com.ntx.blog.service.TBlogService;
@@ -8,6 +9,7 @@ import com.ntx.blog.service.TCommentService;
 import com.ntx.common.domain.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -22,6 +24,8 @@ public class CommentController {
     private StringRedisTemplate redisTemplate;
     @Autowired
     private TBlogService blogService;
+    @Autowired
+    private KafkaTemplate<String, String> kafkaTemplate;
 
     /**
      * 新增评论
@@ -30,11 +34,9 @@ public class CommentController {
      */
     @PostMapping("/addComment")
     public Result addComment(@RequestBody TComment comment){
-        comment.setDeleted(1);
-        comment.setCreateTime(LocalDateTime.now());
-        comment.setModifyTime(LocalDateTime.now());
-//        return commentService.save(comment) ? Result.success("评论成功") : Result.error("网络异常");
-        return commentService.saveComment(comment);
+        kafkaTemplate.send("blogComment","", JSON.toJSONString(comment));
+//        return commentService.saveComment(comment);
+        return Result.success("评论成功");
     }
 
     /**

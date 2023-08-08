@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -44,21 +45,24 @@ public class TCommentServiceImpl extends ServiceImpl<TCommentMapper, TComment>
     @Autowired
     private TBlogService blogService;
 
-    /**
-     * 新增评论
-     * @param comment
-     * @return
-     */
-    @Override
-    public Result saveComment(TComment comment) {
-        Boolean save = commentMapper.saveComment(comment);
-        //评论完成后，将blog的评论数+1
-        if (save) {
-            boolean update = blogService.update().setSql("comment = comment + 1").eq("id", comment.getBlogId()).update();
-            return update ? Result.success("评论成功") : Result.error("网络异常");
-        }
-        return Result.error("网络异常");
-    }
+//    /**
+//     * 新增评论
+//     * @param comment
+//     * @return
+//     */
+//    @Override
+//    public Result saveComment(TComment comment) {
+//        comment.setDeleted(1);
+//        comment.setCreateTime(LocalDateTime.now());
+//        comment.setModifyTime(LocalDateTime.now());
+//        Boolean save = commentMapper.saveComment(comment);
+//        //评论完成后，将blog的评论数+1
+//        if (save) {
+//            boolean update = blogService.update().setSql("comment = comment + 1").eq("id", comment.getBlogId()).update();
+//            return update ? Result.success("评论成功") : Result.error("网络异常");
+//        }
+//        return Result.error("网络异常");
+//    }
 
     /**
      * 根据blog查找评论
