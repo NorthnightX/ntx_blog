@@ -50,6 +50,9 @@ spring:
     multipart:
       max-file-size: 300MB
       max-request-size: 350MB
+  data:
+    mongodb:
+      uri: mongodb://8.140.17.235:27017/blogdb
 mybatis-plus:
   type-aliases-package: com.ntx.blogType.entity
   configuration:
@@ -61,7 +64,6 @@ logging:
 ribbon:
   eager-load:
     enabled: true
-
 
 #eureka:
 #  client:

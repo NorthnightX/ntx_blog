@@ -16,12 +16,14 @@ import com.ntx.common.domain.TBlogType;
 import com.ntx.common.domain.TUser;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -43,6 +45,8 @@ public class BlogController {
     private UserClient userClient;
     @Autowired
     private KafkaTemplate<String, String> kafkaTemplate;
+    @Autowired
+    private MongoTemplate mongoTemplate;
 
 
 
@@ -74,6 +78,14 @@ public class BlogController {
      */
     @GetMapping("/getBlogById/{id}")
     public Result getBlogById(@PathVariable int id) {
+
+        BlogDTO dto = mongoTemplate.findById(id, BlogDTO.class);
+        if(dto != null){
+            TBlog blog = blogService.getById(id);
+            String jsonString = JSON.toJSONString(blog);
+            kafkaTemplate.send("blogView",  "", jsonString);
+            return Result.success(dto);
+        }
         BlogDTO blogDTO = new BlogDTO();
         TBlog blog = blogService.getById(id);
         Integer typeId = blog.getTypeId();
@@ -95,6 +107,7 @@ public class BlogController {
         kafkaTemplate.send("blogView",  "", jsonString);
         return Result.success(blogDTO);
     }
+
 
     /**
      * blog分页查询

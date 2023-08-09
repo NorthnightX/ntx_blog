@@ -2,17 +2,22 @@ package com.ntx.blog.dto;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.MongoId;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
 @Data
+@Document(collation = "blogdto")
 public class BlogDTO {
     /**
      * 博客编号
      */
     @TableId(type = IdType.AUTO)
+    @MongoId
     private Integer id;
 
     /**

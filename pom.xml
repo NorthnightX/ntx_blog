@@ -49,6 +49,12 @@
     </dependencyManagement>
     <dependencies>
 
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-mongodb</artifactId>
+        </dependency>
+
+
         <!-- Eureka Client (如果需要在其他服务中注册Eureka客户端) -->
         <!--        <dependency>-->
         <!--            <groupId>org.springframework.cloud</groupId>-->

@@ -5,6 +5,11 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.MongoId;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -16,11 +21,15 @@ import java.util.Vector;
  */
 @TableName(value ="t_blog")
 @Data
+//@Document(collation = "blog")
+//@CompoundIndex(def = "{'title':1, 'clickCount':-1}")
 public  class TBlog implements Serializable {
     /**
      * 博客编号
      */
     @TableId(type = IdType.AUTO)
+//    @Indexed
+//    @MongoId
     private Integer id;
     /**
      * 博客标题

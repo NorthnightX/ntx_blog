@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.ntx.blog.domain.TBlog;
 import com.ntx.blog.domain.TComment;
 import com.ntx.blog.domain.TLikeBlog;
+import com.ntx.blog.dto.BlogDTO;
 import com.ntx.blog.mapper.TCommentMapper;
 import com.ntx.blog.service.TBlogService;
 import com.ntx.blog.service.TLikeBlogService;
@@ -23,6 +24,10 @@ import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
@@ -47,6 +52,8 @@ public class BlogKafkaQueryListener {
     private TLikeBlogService likeBlogService;
     @Autowired
     private TCommentMapper commentMapper;
+    @Autowired
+    private MongoTemplate mongoTemplate;
 
     /**
      * kafka的监听器,增加文章阅读量
@@ -57,7 +64,11 @@ public class BlogKafkaQueryListener {
     public void topicListener1(ConsumerRecord<String, String> record) {
         String value = record.value();
         TBlog tBlog = JSON.parseObject(value, TBlog.class);
+        Criteria criteria = Criteria.where("_id").is(tBlog.getId());
+        Query query = new Query(criteria);
         tBlog.setClickCount(tBlog.getClickCount() + 1);
+        Update update = new Update().set("clickCount", tBlog.getClickCount());
+        mongoTemplate.updateFirst(query, update, BlogDTO.class);
         blogService.updateBlodById(tBlog);
     }
 

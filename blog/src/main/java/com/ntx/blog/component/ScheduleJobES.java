@@ -7,6 +7,7 @@ import com.ntx.blog.dto.BlogDTO;
 import com.ntx.blog.service.TBlogService;
 import com.ntx.client.BlogTypeClient;
 import com.ntx.client.UserClient;
+import com.ntx.common.domain.Result;
 import com.ntx.common.domain.TBlogType;
 import com.ntx.common.domain.TUser;
 
@@ -16,8 +17,10 @@ import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.GetMapping;
 
 import java.io.IOException;
 import java.util.List;
@@ -34,6 +37,8 @@ public class ScheduleJobES {
     private BlogTypeClient blogTypeClient;
     @Autowired
     private UserClient userClient;
+    @Autowired
+    private MongoTemplate mongoTemplate;
     /**
      * 定时任务，两小时一次,定期向es中写入数据
      * @throws InterruptedException
@@ -63,6 +68,8 @@ public class ScheduleJobES {
             blogDTO.setBloggerImage(user.getImage());
             blogDTO.setBloggerId(user.getId());
             blogDTO.setBloggerName(user.getName());
+            //更新mongoDB
+            mongoTemplate.save(blogDTO);
             //index方式会替换掉原本的文档，create如果文档存在会返回错误，update是局部更新
             request.add(new IndexRequest("blog").
                     id(String.valueOf(blogDTO.getId())).
@@ -71,4 +78,5 @@ public class ScheduleJobES {
         //3.发送请求
         client.bulk(request, RequestOptions.DEFAULT);
     }
+
 }
