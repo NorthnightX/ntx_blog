@@ -58,6 +58,7 @@ public class BlogKafkaQueryListener {
     /**
      * kafka的监听器,增加文章阅读量
      * 功能已完成
+     *
      * @param record
      */
     @KafkaListener(topics = "blogView", groupId = "blogView")
@@ -130,14 +131,13 @@ public class BlogKafkaQueryListener {
         Criteria criteria = Criteria.where("_id").is(comment.getBlogId());
         Query query = new Query();
         query.addCriteria(criteria);
-        Update update = new Update().set("comment",blog.getComment());
-        mongoTemplate.updateFirst(query,update, BlogDTO.class);
+        Update update = new Update().set("comment", blog.getComment());
+        mongoTemplate.updateFirst(query, update, BlogDTO.class);
         //修改ES的评论数
         UpdateRequest updateRequest = new UpdateRequest("blog", String.valueOf(comment.getBlogId()));
         updateRequest.doc("comment", blog.getComment());
         client.update(updateRequest, RequestOptions.DEFAULT);
     }
-
 
 
     /**
@@ -151,6 +151,7 @@ public class BlogKafkaQueryListener {
         String value = record.value();
         TLikeBlog likeBlog = JSON.parseObject(value, TLikeBlog.class);
         String blogId = String.valueOf(likeBlog.getBlogId());
+        //取消点赞
         if (record.key().equals("cancel")) {
             LambdaQueryWrapper<TLikeBlog> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(TLikeBlog::getBlogId, likeBlog.getBlogId());
@@ -160,11 +161,20 @@ public class BlogKafkaQueryListener {
                 //更新blog的点赞数量
                 boolean update = blogService.update().setSql("like_count = like_count - 1").eq("id", likeBlog.getBlogId()).update();
                 if (update) {
+                    //修改Redis
                     stringRedisTemplate.opsForSet().remove(BLOG_LIKE_KEY + likeBlog.getUserId(), blogId);
+                    //修改MongoDB
+                    Query query = new Query();
+                    query.addCriteria(Criteria.where("_id").is(likeBlog.getBlogId()));
+                    Update updateMongoD = new Update().inc("likeCount", -1);
+                    mongoTemplate.updateFirst(query, updateMongoD, BlogDTO.class);
+                    //修改ES
                     ESUpdate(likeBlog.getBlogId(), -1);
                 }
             }
-        } else if (record.key().equals("like")) {
+        }
+        //点赞
+        else if (record.key().equals("like")) {
             likeBlog.setCreateTime(LocalDateTime.now());
             //点赞
             boolean save = likeBlogService.save(likeBlog);
@@ -174,10 +184,18 @@ public class BlogKafkaQueryListener {
                 if (update) {
                     //向redis中添加用户的点赞信息
                     stringRedisTemplate.opsForSet().add(BLOG_LIKE_KEY + likeBlog.getUserId(), String.valueOf(likeBlog.getBlogId()));
+                    //修改MongoDB
+                    Query query = new Query();
+                    query.addCriteria(Criteria.where("_id").is(likeBlog.getBlogId()));
+                    Update updateMongoD = new Update().inc("likeCount", 1);
+                    mongoTemplate.updateFirst(query, updateMongoD, BlogDTO.class);
+                    //修改ES
                     ESUpdate(likeBlog.getBlogId(), 1);
                 }
             }
-        } else if (record.key().equals("disLikeToLike")) {
+        }
+        //取消反对，点赞（反对还未实现）
+        else if (record.key().equals("disLikeToLike")) {
             boolean update1 = likeBlogService.update().setSql("is_like = 1").
                     eq("blog_id", likeBlog.getBlogId()).eq("user_id", likeBlog.getUserId()).update();
             //更新成功，写入redis
@@ -186,6 +204,12 @@ public class BlogKafkaQueryListener {
                 stringRedisTemplate.opsForSet().remove(BLOG_OPPOSE_KEY + likeBlog.getUserId(), blogId);
                 //向用户点赞set添加数据
                 stringRedisTemplate.opsForSet().add(BLOG_LIKE_KEY + likeBlog.getUserId(), String.valueOf(likeBlog.getBlogId()));
+                //修改MongoDB
+                Query query = new Query();
+                query.addCriteria(Criteria.where("_id").is(likeBlog.getBlogId()));
+                Update updateMongoD = new Update().inc("likeCount", 1);
+                mongoTemplate.updateFirst(query, updateMongoD, BlogDTO.class);
+                //修改ES
                 ESUpdate(likeBlog.getBlogId(), 1);
             }
         }

@@ -214,8 +214,8 @@ public class BlogController {
         }
     }
 
-    /**
-     * 使用es进行查询
+    /** (完成)
+     * 使用es进行查询(用户关键字搜索)
      * @param pageNum
      * @param pageSize
      * @param keyword
