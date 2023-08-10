@@ -16,7 +16,10 @@ import com.ntx.common.domain.TBlogType;
 import com.ntx.common.domain.TUser;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.*;
 
@@ -106,8 +109,9 @@ public class BlogController {
     }
 
 
-    /**
+    /**(完成)
      * blog分页查询
+     * 使用MongoDB分页
      * @param pageNum
      * @param pageSize
      * @param title
@@ -119,55 +123,73 @@ public class BlogController {
                               @RequestParam(required = false, defaultValue = "10") int pageSize,
                               @RequestParam(required = false) String title,
                               @RequestParam(required = false) Long typeId){
-        //条件查询
-        LambdaQueryWrapper<TBlog> queryWrapper = new LambdaQueryWrapper<>();
-        TBlog tBlog = new TBlog();
-        if(title != null){
-            queryWrapper.like(TBlog::getTitle, title);
-            tBlog.setTitle("%" + title + "%");
-        }
-        if(typeId != null){
-            queryWrapper.eq(TBlog::getTypeId, typeId);
-            tBlog.setTypeId(Math.toIntExact(typeId));
-        }
-        //获取查询的结果
-        List<TBlog> pageInfo = blogService.getPage(pageNum, pageSize, tBlog);
-        //使用stream获取typeId
-        List<Integer> typeIds = pageInfo.stream().
-                map(TBlog::getTypeId).distinct().collect(Collectors.toList());
-        //远程调用blogType模块查询typeName
-        if(typeIds.size() == 0){
-            return Result.error("找不到指定内容");
-        }
-        //异步调用blogTypeClient获取数据
-        List<TBlogType> byTypeIds = blogTypeClient.getByTypeIds(typeIds);
-
-        //获取用户数据
-        List<Integer> userList = pageInfo.stream().map(TBlog::getBlogger).
-                distinct().collect(Collectors.toList());
-        List<TUser> users = userClient.getByIds(userList);
-        Map<Integer, TUser> tUserMap = users.stream().collect(Collectors.toMap(TUser::getId, tUser -> tUser));
-        //获取blogType的数据
-        Map<Integer, String> typesMap = byTypeIds.stream().
-                collect(Collectors.toMap(TBlogType::getId, TBlogType::getName));
-        //将结果转成map
-        //stream流进行数据处理，返回blogDTO集合
-        List<BlogDTO> blogDTOList = pageInfo.stream().map((item) -> {
-            BlogDTO blogDTO = new BlogDTO();
-            BeanUtil.copyProperties(item, blogDTO);
-            TUser user = tUserMap.get(item.getBlogger());
-            blogDTO.setBloggerId(user.getId());
-            blogDTO.setBloggerName(user.getName());
-            blogDTO.setBloggerImage(user.getImage());
-            blogDTO.setTypeName(typesMap.get(blogDTO.getTypeId()));
-            return blogDTO;
-        }).collect(Collectors.toList());
-        //数据封装
+        Query query = new Query();
         Page<BlogDTO> page = new Page<>(pageNum, pageSize);
-        int count = blogService.count(queryWrapper);
-        page.setTotal(count);
+        if(typeId != null){
+            query.addCriteria(Criteria.where("typeId").is(typeId));
+        }
+        if (title != null && !title.isEmpty()) {
+            //i:不区分大小写
+            query.addCriteria(Criteria.where("title").regex(title, "i"));
+        }
+        //查询总条数
+        long count = mongoTemplate.count(query, BlogDTO.class);
+        //查询文章内容
+        query.skip((long) (pageNum - 1) * pageSize).limit(pageSize).with(Sort.by(Sort.Direction.DESC,"clickCount"));
+        List<BlogDTO> blogDTOList = mongoTemplate.find(query, BlogDTO.class);
         page.setRecords(blogDTOList);
+        page.setTotal(count);
         return Result.success(page);
+
+//        //条件查询
+//        LambdaQueryWrapper<TBlog> queryWrapper = new LambdaQueryWrapper<>();
+//        TBlog tBlog = new TBlog();
+//        if(title != null){
+//            queryWrapper.like(TBlog::getTitle, title);
+//            tBlog.setTitle("%" + title + "%");
+//        }
+//        if(typeId != null){
+//            queryWrapper.eq(TBlog::getTypeId, typeId);
+//            tBlog.setTypeId(Math.toIntExact(typeId));
+//        }
+//        //获取查询的结果
+//        List<TBlog> pageInfo = blogService.getPage(pageNum, pageSize, tBlog);
+//        //使用stream获取typeId
+//        List<Integer> typeIds = pageInfo.stream().
+//                map(TBlog::getTypeId).distinct().collect(Collectors.toList());
+//        //远程调用blogType模块查询typeName
+//        if(typeIds.size() == 0){
+//            return Result.error("找不到指定内容");
+//        }
+//        //异步调用blogTypeClient获取数据
+//        List<TBlogType> byTypeIds = blogTypeClient.getByTypeIds(typeIds);
+//
+//        //获取用户数据
+//        List<Integer> userList = pageInfo.stream().map(TBlog::getBlogger).
+//                distinct().collect(Collectors.toList());
+//        List<TUser> users = userClient.getByIds(userList);
+//        Map<Integer, TUser> tUserMap = users.stream().collect(Collectors.toMap(TUser::getId, tUser -> tUser));
+//        //获取blogType的数据
+//        Map<Integer, String> typesMap = byTypeIds.stream().
+//                collect(Collectors.toMap(TBlogType::getId, TBlogType::getName));
+//        //将结果转成map
+//        //stream流进行数据处理，返回blogDTO集合
+//        List<BlogDTO> blogDTOList = pageInfo.stream().map((item) -> {
+//            BlogDTO blogDTO = new BlogDTO();
+//            BeanUtil.copyProperties(item, blogDTO);
+//            TUser user = tUserMap.get(item.getBlogger());
+//            blogDTO.setBloggerId(user.getId());
+//            blogDTO.setBloggerName(user.getName());
+//            blogDTO.setBloggerImage(user.getImage());
+//            blogDTO.setTypeName(typesMap.get(blogDTO.getTypeId()));
+//            return blogDTO;
+//        }).collect(Collectors.toList());
+//        //数据封装
+//        Page<BlogDTO> page = new Page<>(pageNum, pageSize);
+//        int count = blogService.count(queryWrapper);
+//        page.setTotal(count);
+//        page.setRecords(blogDTOList);
+//        return Result.success(page);
     }
 
 
