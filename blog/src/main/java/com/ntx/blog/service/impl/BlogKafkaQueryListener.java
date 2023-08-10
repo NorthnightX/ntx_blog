@@ -66,6 +66,8 @@ public class BlogKafkaQueryListener {
         int id = Integer.parseInt(value);
         TBlog tBlog = blogService.getById(id);
         tBlog.setClickCount(tBlog.getClickCount() + 1);
+        //先改数据库
+        blogService.updateBlodById(tBlog);
         //修改mongoDB
         Criteria criteria = Criteria.where("_id").is(tBlog.getId());
         Query query = new Query(criteria);
@@ -75,7 +77,6 @@ public class BlogKafkaQueryListener {
         UpdateRequest request = new UpdateRequest("blog", String.valueOf(id));
         request.doc("clickCount", tBlog.getClickCount());
         client.update(request, RequestOptions.DEFAULT);
-        blogService.updateBlodById(tBlog);
     }
 
     /**
@@ -115,17 +116,26 @@ public class BlogKafkaQueryListener {
      * @param record
      */
     @KafkaListener(topics = "blogComment", groupId = "blogComment")
-    public void topicListener3(ConsumerRecord<String, String> record) {
+    public void topicListener3(ConsumerRecord<String, String> record) throws IOException {
         String value = record.value();
         TComment comment = JSON.parseObject(value, TComment.class);
         comment.setDeleted(1);
         comment.setCreateTime(LocalDateTime.now());
         comment.setModifyTime(LocalDateTime.now());
-        Boolean save = commentMapper.saveComment(comment);
+        commentMapper.saveComment(comment);
         //评论完成后，将blog的评论数+1
-        if (save) {
-            blogService.update().setSql("comment = comment + 1").eq("id", comment.getBlogId()).update();
-        }
+        blogService.update().setSql("comment = comment + 1").eq("id", comment.getBlogId()).update();
+        TBlog blog = blogService.getById(comment.getBlogId());
+        //修改MongoDB评论数
+        Criteria criteria = Criteria.where("_id").is(comment.getBlogId());
+        Query query = new Query();
+        query.addCriteria(criteria);
+        Update update = new Update().set("comment",blog.getComment());
+        mongoTemplate.updateFirst(query,update, BlogDTO.class);
+        //修改ES的评论数
+        UpdateRequest updateRequest = new UpdateRequest("blog", String.valueOf(comment.getBlogId()));
+        updateRequest.doc("comment", blog.getComment());
+        client.update(updateRequest, RequestOptions.DEFAULT);
     }
 
 

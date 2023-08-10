@@ -132,9 +132,12 @@ public class BlogController {
             //i:不区分大小写
             query.addCriteria(Criteria.where("title").regex(title, "i"));
         }
+        //过滤私有和已删除的
+        query.addCriteria(Criteria.where("deleted").is(1));
+        query.addCriteria(Criteria.where("isPublic").is(1));
         //查询总条数
         long count = mongoTemplate.count(query, BlogDTO.class);
-        //查询文章内容
+        //查询文章内容，私有的，删除的不查询
         query.skip((long) (pageNum - 1) * pageSize).limit(pageSize).with(Sort.by(Sort.Direction.DESC,"clickCount"));
         List<BlogDTO> blogDTOList = mongoTemplate.find(query, BlogDTO.class);
         page.setRecords(blogDTOList);
