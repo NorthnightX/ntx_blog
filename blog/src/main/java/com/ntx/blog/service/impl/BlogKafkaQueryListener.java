@@ -57,18 +57,24 @@ public class BlogKafkaQueryListener {
 
     /**
      * kafka的监听器,增加文章阅读量
-     *
+     * 功能已完成
      * @param record
      */
     @KafkaListener(topics = "blogView", groupId = "blogView")
-    public void topicListener1(ConsumerRecord<String, String> record) {
+    public void topicListener1(ConsumerRecord<String, String> record) throws IOException {
         String value = record.value();
-        TBlog tBlog = JSON.parseObject(value, TBlog.class);
+        int id = Integer.parseInt(value);
+        TBlog tBlog = blogService.getById(id);
+        tBlog.setClickCount(tBlog.getClickCount() + 1);
+        //修改mongoDB
         Criteria criteria = Criteria.where("_id").is(tBlog.getId());
         Query query = new Query(criteria);
-        tBlog.setClickCount(tBlog.getClickCount() + 1);
         Update update = new Update().set("clickCount", tBlog.getClickCount());
         mongoTemplate.updateFirst(query, update, BlogDTO.class);
+        //修改es的点击量
+        UpdateRequest request = new UpdateRequest("blog", String.valueOf(id));
+        request.doc("clickCount", tBlog.getClickCount());
+        client.update(request, RequestOptions.DEFAULT);
         blogService.updateBlodById(tBlog);
     }
 

@@ -71,7 +71,7 @@ public class BlogController {
 
 
     /**
-     *
+     * (完成)
      * 封装blogDTO返回，根据blogId查找其基本信息
      * @param id
      * @return
@@ -81,9 +81,7 @@ public class BlogController {
 
         BlogDTO dto = mongoTemplate.findById(id, BlogDTO.class);
         if(dto != null){
-            TBlog blog = blogService.getById(id);
-            String jsonString = JSON.toJSONString(blog);
-            kafkaTemplate.send("blogView",  "", jsonString);
+            kafkaTemplate.send("blogView",  "", String.valueOf(id));
             return Result.success(dto);
         }
         BlogDTO blogDTO = new BlogDTO();
@@ -103,8 +101,7 @@ public class BlogController {
         blogDTO.setBloggerName(userMap.get(blogger).getName());
         blogDTO.setBloggerImage(userMap.get(blogger).getImage());
         blogDTO.setBloggerId(blogger);
-        String jsonString = JSON.toJSONString(blog);
-        kafkaTemplate.send("blogView",  "", jsonString);
+        kafkaTemplate.send("blogView",  "", String.valueOf(id));
         return Result.success(blogDTO);
     }
 

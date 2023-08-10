@@ -11,7 +11,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
 @Data
-@Document(collation = "blogdto")
+@Document("blogdto")
 public class BlogDTO {
     /**
      * 博客编号
