@@ -241,6 +241,19 @@ public class BlogController {
         String jsonString = JSON.toJSONString(blog);
         kafkaTemplate.send("blogAdd", "", jsonString);
         return Result.success("发布成功");
-//        return blogService.saveBlog(blog);
+    }
+
+    /**
+     * 获取用户的博客
+     * @param id
+     * @return
+     */
+    @GetMapping("/blogByUser/{id}")
+    public Result blogByUser(@PathVariable int id){
+        //查询mongoDB，查不到查数据库
+        Query query = new Query();
+        query.addCriteria(Criteria.where("bloggerId").is(id)).addCriteria(Criteria.where("deleted").is(1));
+        List<BlogDTO> blogDTOList = mongoTemplate.find(query, BlogDTO.class);
+        return Result.success(blogDTOList);
     }
 }

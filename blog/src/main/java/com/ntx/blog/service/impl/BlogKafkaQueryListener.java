@@ -55,6 +55,7 @@ public class BlogKafkaQueryListener {
     @Autowired
     private MongoTemplate mongoTemplate;
 
+
     /**
      * kafka的监听器,增加文章阅读量
      * 功能已完成

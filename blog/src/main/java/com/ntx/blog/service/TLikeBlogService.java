@@ -15,4 +15,6 @@ public interface TLikeBlogService extends IService<TLikeBlog> {
     Result likeBlog(TLikeBlog likeBlog);
 
     Result queryLikeByUser(Integer userId);
+
+
 }
