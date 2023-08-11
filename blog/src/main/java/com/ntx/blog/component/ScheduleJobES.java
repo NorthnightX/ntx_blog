@@ -60,12 +60,11 @@ public class ScheduleJobES {
         list.forEach((blog) -> {
             BlogDTO blogDTO = new BlogDTO();
             BeanUtil.copyProperties(blog, blogDTO);
-            blogDTO.setBloggerId(blog.getBlogger());
             blogDTO.setTypeName(typeMap.get(blogDTO.getTypeId()));
             TUser user = userMap.get(blog.getBlogger());
             blogDTO.setBloggerImage(user.getImage());
             blogDTO.setBloggerId(user.getId());
-            blogDTO.setBloggerName(user.getName());
+            blogDTO.setBloggerName(user.getNickName());
             //更新mongoDB
             mongoTemplate.save(blogDTO);
             //index方式会替换掉原本的文档，create如果文档存在会返回错误，update是局部更新

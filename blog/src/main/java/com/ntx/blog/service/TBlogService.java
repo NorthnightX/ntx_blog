@@ -25,5 +25,9 @@ public interface TBlogService extends IService<TBlog> {
 
     Result getMaxWatchInTwoDays();
 
+    Result blogByUser(int id);
+
+    Result getBlogById(int id);
+
 //    Result saveBlog(TBlog blog) throws IOException;
 }

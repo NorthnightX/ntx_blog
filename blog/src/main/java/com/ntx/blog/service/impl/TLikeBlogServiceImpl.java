@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static com.ntx.blog.common.SystemContent.*;
 
@@ -110,18 +111,22 @@ public class TLikeBlogServiceImpl extends ServiceImpl<TLikeBlogMapper, TLikeBlog
         LambdaQueryWrapper<TLikeBlog> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TLikeBlog::getId, userId).eq(TLikeBlog::getIsLike, 1);
         List<TLikeBlog> list = this.list(queryWrapper);
-        //如果数据库有
-        if (!list.isEmpty()) {
-            //保存数据到redis，并返回数据
-            List<String> blogIdList = new ArrayList<>(list.size());
-            for (TLikeBlog tLikeBlog : list) {
-                String blogId = String.valueOf(tLikeBlog.getBlogId());
-                stringRedisTemplate.opsForSet().add(redisKey, blogId);
-                blogIdList.add(blogId);
-            }
-            return Result.success(blogIdList);
+        //如果数据库没有
+        if (list.isEmpty()) {
+            //缓存空对象，防止缓存穿透
+            stringRedisTemplate.opsForSet().add(redisKey,"");
+            stringRedisTemplate.expire(redisKey, BLOG_LIKE_IS_NULL_TTL, TimeUnit.MINUTES);
+            return Result.success(new ArrayList<>());
         }
-        return Result.success(new ArrayList<>());
+        //如果数据库有
+        //保存数据到redis，并返回数据
+        List<String> blogIdList = new ArrayList<>(list.size());
+        for (TLikeBlog tLikeBlog : list) {
+            String blogId = String.valueOf(tLikeBlog.getBlogId());
+            stringRedisTemplate.opsForSet().add(redisKey, blogId);
+            blogIdList.add(blogId);
+        }
+        return Result.success(blogIdList);
     }
 
 }

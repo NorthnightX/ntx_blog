@@ -2,6 +2,7 @@ package com.ntx.blog.controller;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ntx.blog.domain.TBlog;
 import com.ntx.blog.dto.BlogDTO;
@@ -38,11 +39,6 @@ public class BlogController {
 //    private RestTemplate restTemplate;
     // feign用于远程调用
     @Autowired
-    private BlogTypeClient blogTypeClient;
-
-    @Autowired
-    private UserClient userClient;
-    @Autowired
     private KafkaTemplate<String, String> kafkaTemplate;
     @Autowired
     private MongoTemplate mongoTemplate;
@@ -77,31 +73,8 @@ public class BlogController {
      */
     @GetMapping("/getBlogById/{id}")
     public Result getBlogById(@PathVariable int id) {
+        return blogService.getBlogById(id);
 
-        BlogDTO dto = mongoTemplate.findById(id, BlogDTO.class);
-        if (dto != null) {
-            kafkaTemplate.send("blogView", "", String.valueOf(id));
-            return Result.success(dto);
-        }
-        BlogDTO blogDTO = new BlogDTO();
-        TBlog blog = blogService.getById(id);
-        Integer typeId = blog.getTypeId();
-        TBlogType blogType = blogTypeClient.getByTypeId(typeId);
-        if (blogType != null) {
-            blogDTO.setTypeName(blogType.getName());
-        }
-        Integer blogger = blog.getBlogger();
-        List<Integer> list = new ArrayList<>();
-        list.add(blogger);
-        List<TUser> userList = userClient.getByIds(list);
-        //设置返回DTO属性
-        BeanUtil.copyProperties(blog, blogDTO);
-        Map<Integer, TUser> userMap = userList.stream().collect(Collectors.toMap(TUser::getId, tUser -> tUser));
-        blogDTO.setBloggerName(userMap.get(blogger).getName());
-        blogDTO.setBloggerImage(userMap.get(blogger).getImage());
-        blogDTO.setBloggerId(blogger);
-        kafkaTemplate.send("blogView", "", String.valueOf(id));
-        return Result.success(blogDTO);
     }
 
 
@@ -141,56 +114,6 @@ public class BlogController {
         page.setRecords(blogDTOList);
         page.setTotal(count);
         return Result.success(page);
-
-//        //条件查询
-//        LambdaQueryWrapper<TBlog> queryWrapper = new LambdaQueryWrapper<>();
-//        TBlog tBlog = new TBlog();
-//        if(title != null){
-//            queryWrapper.like(TBlog::getTitle, title);
-//            tBlog.setTitle("%" + title + "%");
-//        }
-//        if(typeId != null){
-//            queryWrapper.eq(TBlog::getTypeId, typeId);
-//            tBlog.setTypeId(Math.toIntExact(typeId));
-//        }
-//        //获取查询的结果
-//        List<TBlog> pageInfo = blogService.getPage(pageNum, pageSize, tBlog);
-//        //使用stream获取typeId
-//        List<Integer> typeIds = pageInfo.stream().
-//                map(TBlog::getTypeId).distinct().collect(Collectors.toList());
-//        //远程调用blogType模块查询typeName
-//        if(typeIds.size() == 0){
-//            return Result.error("找不到指定内容");
-//        }
-//        //异步调用blogTypeClient获取数据
-//        List<TBlogType> byTypeIds = blogTypeClient.getByTypeIds(typeIds);
-//
-//        //获取用户数据
-//        List<Integer> userList = pageInfo.stream().map(TBlog::getBlogger).
-//                distinct().collect(Collectors.toList());
-//        List<TUser> users = userClient.getByIds(userList);
-//        Map<Integer, TUser> tUserMap = users.stream().collect(Collectors.toMap(TUser::getId, tUser -> tUser));
-//        //获取blogType的数据
-//        Map<Integer, String> typesMap = byTypeIds.stream().
-//                collect(Collectors.toMap(TBlogType::getId, TBlogType::getName));
-//        //将结果转成map
-//        //stream流进行数据处理，返回blogDTO集合
-//        List<BlogDTO> blogDTOList = pageInfo.stream().map((item) -> {
-//            BlogDTO blogDTO = new BlogDTO();
-//            BeanUtil.copyProperties(item, blogDTO);
-//            TUser user = tUserMap.get(item.getBlogger());
-//            blogDTO.setBloggerId(user.getId());
-//            blogDTO.setBloggerName(user.getName());
-//            blogDTO.setBloggerImage(user.getImage());
-//            blogDTO.setTypeName(typesMap.get(blogDTO.getTypeId()));
-//            return blogDTO;
-//        }).collect(Collectors.toList());
-//        //数据封装
-//        Page<BlogDTO> page = new Page<>(pageNum, pageSize);
-//        int count = blogService.count(queryWrapper);
-//        page.setTotal(count);
-//        page.setRecords(blogDTOList);
-//        return Result.success(page);
     }
 
 
@@ -251,11 +174,8 @@ public class BlogController {
      */
     @GetMapping("/blogByUser/{id}")
     public Result blogByUser(@PathVariable int id) {
-        //查询mongoDB，查不到查数据库
-        Query query = new Query();
-        query.addCriteria(Criteria.where("bloggerId").is(id)).addCriteria(Criteria.where("deleted").is(1));
-        List<BlogDTO> blogDTOList = mongoTemplate.find(query, BlogDTO.class);
-        return Result.success(blogDTOList);
+        return blogService.blogByUser(id);
+
     }
 
     /**
@@ -274,10 +194,11 @@ public class BlogController {
 
     /**
      * 选出两天内阅读量最多的文章
+     *
      * @return
      */
     @GetMapping("/readNumMaxInTwoDays")
-    public Result readNumMaxInTwoDays(){
+    public Result readNumMaxInTwoDays() {
 
         return blogService.getMaxWatchInTwoDays();
     }
