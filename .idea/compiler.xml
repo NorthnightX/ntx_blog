@@ -11,7 +11,6 @@
         <module name="blog-gateway" />
         <module name="upload" />
         <module name="showImage" />
-        <module name="feign_api" />
         <module name="blog" />
         <module name="user" />
         <module name="blogType" />
@@ -20,6 +19,7 @@
     <bytecodeTargetLevel>
       <module name="blog_rabbitmq" target="1.8" />
       <module name="eureka-server" target="1.8" />
+      <module name="feign_api" target="1.8" />
       <module name="gateway" target="1.8" />
     </bytecodeTargetLevel>
   </component>

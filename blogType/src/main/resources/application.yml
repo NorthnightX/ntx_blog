@@ -7,17 +7,6 @@ spring:
     port: 5672
     username: root
     password: 123456
-  mail:
-    host: smtp.qq.com
-    username: 2927697242@qq.com
-    password: nltlcygbednxdgea
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-            required: true
   cloud:
     nacos:
       server-addr: 127.0.0.1:8848

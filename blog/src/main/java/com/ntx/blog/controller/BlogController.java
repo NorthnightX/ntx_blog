@@ -2,19 +2,16 @@ package com.ntx.blog.controller;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.alibaba.fastjson.JSON;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ntx.blog.domain.TBlog;
 import com.ntx.blog.dto.BlogDTO;
 import com.ntx.blog.service.TBlogService;
-
-
-import com.ntx.client.BlogTypeClient;
-import com.ntx.client.UserClient;
+import com.ntx.common.VO.UpdateUserForm;
+import com.ntx.common.client.BlogTypeClient;
+import com.ntx.common.client.UserClient;
 import com.ntx.common.domain.Result;
 import com.ntx.common.domain.TBlogType;
 import com.ntx.common.domain.TUser;
-import org.apache.kafka.clients.producer.KafkaProducer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -26,7 +23,6 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -42,7 +38,7 @@ public class BlogController {
 //    private RestTemplate restTemplate;
     // feign用于远程调用
     @Autowired
-    private BlogTypeClient blogTypeClient ;
+    private BlogTypeClient blogTypeClient;
 
     @Autowired
     private UserClient userClient;
@@ -50,7 +46,6 @@ public class BlogController {
     private KafkaTemplate<String, String> kafkaTemplate;
     @Autowired
     private MongoTemplate mongoTemplate;
-
 
 
     /**
@@ -76,6 +71,7 @@ public class BlogController {
     /**
      * (完成)
      * 封装blogDTO返回，根据blogId查找其基本信息
+     *
      * @param id
      * @return
      */
@@ -83,8 +79,8 @@ public class BlogController {
     public Result getBlogById(@PathVariable int id) {
 
         BlogDTO dto = mongoTemplate.findById(id, BlogDTO.class);
-        if(dto != null){
-            kafkaTemplate.send("blogView",  "", String.valueOf(id));
+        if (dto != null) {
+            kafkaTemplate.send("blogView", "", String.valueOf(id));
             return Result.success(dto);
         }
         BlogDTO blogDTO = new BlogDTO();
@@ -104,14 +100,16 @@ public class BlogController {
         blogDTO.setBloggerName(userMap.get(blogger).getName());
         blogDTO.setBloggerImage(userMap.get(blogger).getImage());
         blogDTO.setBloggerId(blogger);
-        kafkaTemplate.send("blogView",  "", String.valueOf(id));
+        kafkaTemplate.send("blogView", "", String.valueOf(id));
         return Result.success(blogDTO);
     }
 
 
-    /**(完成)
+    /**
+     * (完成)
      * blog分页查询
      * 使用MongoDB分页
+     *
      * @param pageNum
      * @param pageSize
      * @param title
@@ -122,10 +120,10 @@ public class BlogController {
     public Result getBlogPage(@RequestParam(required = false, defaultValue = "1") int pageNum,
                               @RequestParam(required = false, defaultValue = "10") int pageSize,
                               @RequestParam(required = false) String title,
-                              @RequestParam(required = false) Long typeId){
+                              @RequestParam(required = false) Long typeId) {
         Query query = new Query();
         Page<BlogDTO> page = new Page<>(pageNum, pageSize);
-        if(typeId != null){
+        if (typeId != null) {
             query.addCriteria(Criteria.where("typeId").is(typeId));
         }
         if (title != null && !title.isEmpty()) {
@@ -138,7 +136,7 @@ public class BlogController {
         //查询总条数
         long count = mongoTemplate.count(query, BlogDTO.class);
         //查询文章内容，私有的，删除的不查询
-        query.skip((long) (pageNum - 1) * pageSize).limit(pageSize).with(Sort.by(Sort.Direction.DESC,"clickCount"));
+        query.skip((long) (pageNum - 1) * pageSize).limit(pageSize).with(Sort.by(Sort.Direction.DESC, "clickCount"));
         List<BlogDTO> blogDTOList = mongoTemplate.find(query, BlogDTO.class);
         page.setRecords(blogDTOList);
         page.setTotal(count);
@@ -196,26 +194,27 @@ public class BlogController {
     }
 
 
-
     /**
      * 更新blog信息
+     *
      * @param blog
      * @return
      */
     @PutMapping("/updateBlog")
-    public Result updateBlog(@RequestBody TBlog blog){
+    public Result updateBlog(@RequestBody TBlog blog) {
         blog.setGmtModified(LocalDateTime.now());
         int updated = blogService.updateBlodById(blog);
-        if(updated == 1){
+        if (updated == 1) {
             return Result.success("修改成功");
-        }
-        else{
+        } else {
             return Result.error("修改失败");
         }
     }
 
-    /** (完成)
+    /**
+     * (完成)
      * 使用es进行查询(用户关键字搜索)
+     *
      * @param pageNum
      * @param pageSize
      * @param keyword
@@ -232,6 +231,7 @@ public class BlogController {
 
     /**
      * 保存blog
+     *
      * @param blog
      * @return
      */
@@ -245,15 +245,30 @@ public class BlogController {
 
     /**
      * 获取用户的博客
+     *
      * @param id
      * @return
      */
     @GetMapping("/blogByUser/{id}")
-    public Result blogByUser(@PathVariable int id){
+    public Result blogByUser(@PathVariable int id) {
         //查询mongoDB，查不到查数据库
         Query query = new Query();
         query.addCriteria(Criteria.where("bloggerId").is(id)).addCriteria(Criteria.where("deleted").is(1));
         List<BlogDTO> blogDTOList = mongoTemplate.find(query, BlogDTO.class);
         return Result.success(blogDTOList);
+    }
+
+    /**
+     * 更新ES和mongoD（只用更新用户的nickName和image）
+     * bloggerName;
+     * bloggerImage;
+     *
+     * @param userForm
+     * @return
+     */
+    @PutMapping("/updateBLogInMongoDAndES")
+    public Boolean updateBLogInMongoDAndES(@RequestBody UpdateUserForm userForm) throws IOException {
+        return blogService.updateBLogInMongoDAndES(userForm);
+
     }
 }

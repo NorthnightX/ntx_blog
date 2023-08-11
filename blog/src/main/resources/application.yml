@@ -7,17 +7,6 @@ spring:
     port: 5672
     username: root
     password: 123456
-  mail: #邮箱配置，用于发送邮件
-    host: smtp.qq.com
-    username: 2927697242@qq.com
-    password: nltlcygbednxdgea
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-            required: true
   cloud: #nacos
     nacos:
       discovery:
@@ -96,10 +85,11 @@ logging: #日志
   level:
     com.ntx: debug
 
-blogTypeService: #nacos负载均衡
-  ribbon:
-    NFLoadBalancerRuleClassName: com.alibaba.cloud.nacos.ribbon.NacosRule
+#blogTypeService: #nacos负载均衡
+#  ribbon:
+#    NFLoadBalancerRuleClassName: com.alibaba.cloud.nacos.ribbon.NacosRule
 #
+
 ##      props.put("bootstrap.servers", " 192.168.203.131:9092");
 ##      props.put("acks", "all");
 ##      props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");

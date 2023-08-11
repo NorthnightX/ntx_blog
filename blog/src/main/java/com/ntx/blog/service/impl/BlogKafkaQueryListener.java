@@ -9,13 +9,10 @@ import com.ntx.blog.dto.BlogDTO;
 import com.ntx.blog.mapper.TCommentMapper;
 import com.ntx.blog.service.TBlogService;
 import com.ntx.blog.service.TLikeBlogService;
-import com.ntx.common.domain.Result;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.checkerframework.checker.units.qual.A;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.RequestOptions;
@@ -114,7 +111,7 @@ public class BlogKafkaQueryListener {
 
     /**
      * 文章评论
-     *
+     * (完成)
      * @param record
      */
     @KafkaListener(topics = "blogComment", groupId = "blogComment")

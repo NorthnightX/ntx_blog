@@ -5,8 +5,8 @@ import com.alibaba.fastjson.JSON;
 import com.ntx.blog.domain.TBlog;
 import com.ntx.blog.dto.BlogDTO;
 import com.ntx.blog.service.TBlogService;
-import com.ntx.client.BlogTypeClient;
-import com.ntx.client.UserClient;
+import com.ntx.common.client.BlogTypeClient;
+import com.ntx.common.client.UserClient;
 import com.ntx.common.domain.Result;
 import com.ntx.common.domain.TBlogType;
 import com.ntx.common.domain.TUser;
@@ -41,10 +41,9 @@ public class ScheduleJobES {
     private MongoTemplate mongoTemplate;
     /**
      * 定时任务，两小时一次,定期向es中写入数据
-     * @throws InterruptedException
      */
     @Scheduled(fixedDelay = 1000 * 60 * 60 * 2)
-    public void fixedDelayTask() throws InterruptedException, IOException {
+    public void fixedDelayTask() throws IOException {
         //1.创建request
         BulkRequest request = new BulkRequest();
         //2.添加数据

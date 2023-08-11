@@ -2,6 +2,7 @@ package com.ntx.blog.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.ntx.blog.domain.TBlog;
+import com.ntx.common.VO.UpdateUserForm;
 import com.ntx.common.domain.Result;
 
 import java.io.IOException;
@@ -19,6 +20,8 @@ public interface TBlogService extends IService<TBlog> {
     List<TBlog> getPage(Integer pageNum, Integer pageSize, TBlog tBlog);
 
     Result queryByKeyword(int pageNum, int pageSize, String keyword) throws IOException;
+
+    Boolean updateBLogInMongoDAndES(UpdateUserForm userForm) throws IOException;
 
 //    Result saveBlog(TBlog blog) throws IOException;
 }

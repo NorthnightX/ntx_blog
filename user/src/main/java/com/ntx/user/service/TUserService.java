@@ -2,6 +2,7 @@ package com.ntx.user.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.ntx.common.domain.TUser;
+import com.ntx.common.VO.UpdateUserForm;
 import com.ntx.user.domain.LoginForm;
 import com.ntx.common.domain.Result;
 
@@ -21,4 +22,8 @@ public interface TUserService extends IService<TUser> {
     Result getVerificationCode() throws IOException;
 
     Result phoneCode(String phone);
+
+    Result getLoginUser(int id);
+
+    Result updateByUserById(UpdateUserForm userForm);
 }

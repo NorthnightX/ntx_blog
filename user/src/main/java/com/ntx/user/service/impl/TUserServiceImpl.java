@@ -6,8 +6,10 @@ import cn.hutool.core.util.RandomUtil;
 import cn.hutool.crypto.digest.MD5;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.ntx.common.client.BlogClient;
 import com.ntx.common.domain.TUser;
 import com.ntx.user.DTO.UserDTO;
+import com.ntx.common.VO.UpdateUserForm;
 import com.ntx.user.domain.LoginForm;
 import com.ntx.user.mapper.TUserMapper;
 import com.ntx.user.service.TUserService;
@@ -16,11 +18,13 @@ import com.ntx.common.domain.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
@@ -41,6 +45,9 @@ public class TUserServiceImpl extends ServiceImpl<TUserMapper, TUser> implements
     private TUserMapper userMapper;
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
+    @Autowired
+    private BlogClient blogClient;
+
 
     @Override
     public TUser getUserById(int id) {
@@ -169,6 +176,44 @@ public class TUserServiceImpl extends ServiceImpl<TUserMapper, TUser> implements
         System.out.println(randomed);
         stringRedisTemplate.opsForValue().set(redisKey, randomed, LOGIN_CODE_TTL, TimeUnit.MINUTES);
         return Result.success(randomed);
+    }
+
+
+    @Override
+    public Result getLoginUser(int id) {
+        TUser userById = this.getUserById(id);
+        UserDTO userDTO = new UserDTO();
+        BeanUtil.copyProperties(userById, userDTO);
+        return Result.success(userDTO);
+    }
+
+    /**
+     * 更新用户数据
+     * @param userForm
+     * @return
+     */
+    @Override
+    @Transactional
+    public Result updateByUserById(UpdateUserForm userForm) {
+        String field = userForm.getField();
+        Integer id = userForm.getId();
+        if(field.equals("image")){
+            String image =  userForm.getImage();
+            boolean update = this.update().
+                    eq("id", id).setSql("image = " + " \" " + image + " \" ").
+                    setSql("gmt_modified = " +  " \" " + LocalDateTime.now() + " \" ").update();
+            if(update){
+                Boolean mongoDAndES = updateBLogInMongoDAndES(userForm);
+                if(mongoDAndES){
+                    return Result.success("修改成功");
+                }
+            }
+        }
+        return Result.error("网络异常");
+    }
+
+    private Boolean updateBLogInMongoDAndES(UpdateUserForm userForm){
+        return blogClient.updateBLogInMongoDAndES(userForm);
     }
 }
 

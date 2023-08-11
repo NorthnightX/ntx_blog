@@ -1,31 +1,24 @@
 package com.ntx.blog.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.util.ArrayUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.ntx.blog.domain.TBlog;
 import com.ntx.blog.domain.TComment;
 import com.ntx.blog.dto.CommentDTO;
 import com.ntx.blog.service.TBlogService;
 import com.ntx.blog.service.TCommentService;
 import com.ntx.blog.mapper.TCommentMapper;
-import com.ntx.client.UserClient;
+
+import com.ntx.common.client.UserClient;
 import com.ntx.common.domain.Result;
 import com.ntx.common.domain.TUser;
-import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-import static com.ntx.blog.common.SystemContent.BLOG_COMMENT_KEY;
 
 /**
  * @author NorthnightX

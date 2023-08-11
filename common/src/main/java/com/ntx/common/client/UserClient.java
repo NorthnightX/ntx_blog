@@ -1,4 +1,4 @@
-package com.ntx.client;
+package com.ntx.common.client;
 
 
 

@@ -1,23 +1,18 @@
 package com.ntx.blog;
 
-import cn.hutool.log.Log;
 import com.netflix.loadbalancer.IRule;
 import com.netflix.loadbalancer.RandomRule;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
-import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.cloud.openfeign.EnableFeignClients;
-import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.client.RestTemplate;
-
-import java.util.logging.Logger;
 
 
 @SpringBootApplication
 @EnableDiscoveryClient //添加注册中心支持
-@EnableFeignClients(basePackages = ("com.ntx.client")) //开启feign支持，指定扫描包
+@EnableFeignClients(basePackages = ("com.ntx.common.client")) //开启feign支持，指定扫描包
 @EnableScheduling
 public class BlogApplication {
     public static void main(String[] args) {
