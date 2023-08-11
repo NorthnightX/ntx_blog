@@ -7,7 +7,6 @@ import com.ntx.blog.dto.BlogDTO;
 import com.ntx.blog.service.TBlogService;
 import com.ntx.common.client.BlogTypeClient;
 import com.ntx.common.client.UserClient;
-import com.ntx.common.domain.Result;
 import com.ntx.common.domain.TBlogType;
 import com.ntx.common.domain.TUser;
 
@@ -20,7 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.GetMapping;
+
 
 import java.io.IOException;
 import java.util.List;

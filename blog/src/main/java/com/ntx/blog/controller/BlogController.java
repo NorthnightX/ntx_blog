@@ -269,6 +269,17 @@ public class BlogController {
     @PutMapping("/updateBLogInMongoDAndES")
     public Boolean updateBLogInMongoDAndES(@RequestBody UpdateUserForm userForm) throws IOException {
         return blogService.updateBLogInMongoDAndES(userForm);
-
     }
+
+
+    /**
+     * 选出两天内阅读量最多的文章
+     * @return
+     */
+    @GetMapping("/readNumMaxInTwoDays")
+    public Result readNumMaxInTwoDays(){
+
+        return blogService.getMaxWatchInTwoDays();
+    }
+
 }

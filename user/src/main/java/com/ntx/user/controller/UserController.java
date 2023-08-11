@@ -5,17 +5,23 @@ import com.ntx.common.VO.UpdateUserForm;
 import com.ntx.user.domain.LoginForm;
 import com.ntx.user.service.TUserService;
 import com.ntx.common.domain.Result;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.util.List;
 
+import static com.ntx.user.common.RedisConstant.LOGIN_USER_COUNT;
+
 @RestController
 @RequestMapping("/user")
 public class UserController {
     @Resource
     private TUserService userService;
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
 
 
     @GetMapping("/getUserById/{id}")
@@ -78,5 +84,15 @@ public class UserController {
     public Result getLoginUser(@PathVariable int id){
         return userService.getLoginUser(id);
 
+    }
+
+    /**
+     * 查询当日用户登录数量
+     * @return
+     */
+    @GetMapping("/getActiveUserToday")
+    public Result getActiveUserToday(){
+        Long size = stringRedisTemplate.opsForHyperLogLog().size(LOGIN_USER_COUNT);
+        return Result.success(size);
     }
 }

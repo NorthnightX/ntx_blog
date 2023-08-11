@@ -31,11 +31,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 
-import static com.ntx.blog.common.SystemContent.BLOG_LIKE_KEY;
-import static com.ntx.blog.common.SystemContent.BLOG_OPPOSE_KEY;
+import static com.ntx.blog.common.SystemContent.*;
 
 @Service
 public class BlogKafkaQueryListener {
@@ -76,6 +77,9 @@ public class BlogKafkaQueryListener {
         UpdateRequest request = new UpdateRequest("blog", String.valueOf(id));
         request.doc("clickCount", tBlog.getClickCount());
         client.update(request, RequestOptions.DEFAULT);
+        //修改redis的阅读排行zset
+        stringRedisTemplate.opsForZSet().incrementScore(BLOG_CLICK + LocalDate.now(), String.valueOf(tBlog.getId()), 1);
+        stringRedisTemplate.expire(BLOG_CLICK + LocalDate.now(), 7, TimeUnit.DAYS);
     }
 
     /**

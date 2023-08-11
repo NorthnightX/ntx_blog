@@ -23,5 +23,7 @@ public interface TBlogService extends IService<TBlog> {
 
     Boolean updateBLogInMongoDAndES(UpdateUserForm userForm) throws IOException;
 
+    Result getMaxWatchInTwoDays();
+
 //    Result saveBlog(TBlog blog) throws IOException;
 }

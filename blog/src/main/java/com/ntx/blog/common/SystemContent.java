@@ -7,4 +7,6 @@ public class SystemContent {
     public static final String BLOG_LIKE_KEY = "blog:like:";
     //用户反对的博客的key
     public static final String BLOG_OPPOSE_KEY = "blog:oppose:";
+    public static final String BLOG_CLICK = "blog:click:";
+    public static final String BLOG_LEADERBOARD = "blog:leaderboard:";
 }

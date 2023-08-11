@@ -20,8 +20,6 @@ import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.script.Script;
-import org.elasticsearch.script.ScriptType;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
@@ -31,15 +29,24 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
+import static com.ntx.blog.common.SystemContent.BLOG_CLICK;
+import static com.ntx.blog.common.SystemContent.BLOG_LEADERBOARD;
 
 /**
 * @author NorthnightX
@@ -57,6 +64,8 @@ public  class TBlogServiceImpl extends ServiceImpl<TBlogMapper, TBlog>
     private RestHighLevelClient client;
     @Autowired
     private MongoTemplate mongoTemplate;
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
 
 
     @Override
@@ -168,6 +177,37 @@ public  class TBlogServiceImpl extends ServiceImpl<TBlogMapper, TBlog>
             return true;
         }
         return false;
+    }
+
+
+    /**
+     * 获取两天阅读排行
+     * @return
+     */
+    @Override
+    public Result getMaxWatchInTwoDays() {
+        //查找Redis获取两天的阅读排行
+        LocalDate today = LocalDate.now();
+        String todayKey = BLOG_LEADERBOARD + today;
+        String yesterdayKey = BLOG_CLICK + today.minusDays(1);
+        // 计算前天的日期
+        String dayBeforeYesterdayKey = BLOG_CLICK + today.minusDays(2);
+        //求前两天click数据的并集，赋值给今天的排行榜数据
+        stringRedisTemplate.opsForZSet().unionAndStore(yesterdayKey, dayBeforeYesterdayKey, todayKey);
+        stringRedisTemplate.expire(todayKey, 1L, TimeUnit.DAYS);
+        Set<ZSetOperations.TypedTuple<String>> typedTuples =
+                stringRedisTemplate.opsForZSet().reverseRangeWithScores(todayKey, 0, 9);
+        if (typedTuples != null) {
+            List<String> blogId = typedTuples.stream().
+                    map(ZSetOperations.TypedTuple::getValue).collect(Collectors.toList());
+            Query query = new Query();
+            query.addCriteria(Criteria.where("_id").in(blogId));
+            query.fields().include("title");
+            List<BlogDTO> blogDTOList = mongoTemplate.find(query, BlogDTO.class);
+            return Result.success(blogDTOList);
+
+        }
+        return Result.error("网络异常");
     }
 
 //    @Override

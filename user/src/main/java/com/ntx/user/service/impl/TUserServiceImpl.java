@@ -94,7 +94,7 @@ public class TUserServiceImpl extends ServiceImpl<TUserMapper, TUser> implements
         userLambdaQueryWrapper.eq(TUser::getName, loginForm.getUsername());
         TUser user = this.getOne(userLambdaQueryWrapper);
         if(user == null){
-            return Result.error("未找到此用户");
+            return Result.error("未找到此用户，请先注册");
         }
         //如果密码相等
         if (user.getPassword().equals(MD5Password)) {
@@ -126,6 +126,8 @@ public class TUserServiceImpl extends ServiceImpl<TUserMapper, TUser> implements
                             return fieldValue;}));
         stringRedisTemplate.opsForHash().putAll(redisKey, userMap);
         stringRedisTemplate.expire(redisKey, LOGIN_USER_TTL, TimeUnit.DAYS);
+        stringRedisTemplate.opsForHyperLogLog().add(LOGIN_USER_COUNT, String.valueOf(user.getId()));
+        stringRedisTemplate.expire(LOGIN_USER_COUNT, LOGIN_USER_COUNT_TTL, TimeUnit.DAYS);
         return userDTO;
     }
 
