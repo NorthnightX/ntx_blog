@@ -13,6 +13,9 @@ import com.ntx.common.client.UserClient;
 import com.ntx.common.domain.Result;
 import com.ntx.common.domain.TUser;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import java.util.ArrayList;
@@ -37,6 +40,8 @@ public class TCommentServiceImpl extends ServiceImpl<TCommentMapper, TComment>
     private UserClient userClient;
     @Autowired
     private TBlogService blogService;
+    @Autowired
+    private MongoTemplate mongoTemplate;
 
 //    /**
 //     * 新增评论
@@ -66,10 +71,14 @@ public class TCommentServiceImpl extends ServiceImpl<TCommentMapper, TComment>
     @Override
     public Result getCommentByBlog(int id) {
 
-        //从redis直接查找，并返回
-
-
-        //redis没有查找数据库
+        //从MongoDB直接查找，并返回
+        Query query = new Query();
+        query.addCriteria(Criteria.where("blogId").is(id));
+        List<CommentDTO> commentDTOS = mongoTemplate.find(query, CommentDTO.class);
+        if(!commentDTOS.isEmpty()){
+            return Result.success(commentDTOS);
+        }
+        //mongoDB没有查找数据库
         LambdaQueryWrapper<TComment> queryWrapper = new LambdaQueryWrapper<>();
         //构造查询wrapper，过滤掉删除掉的评论
         queryWrapper.eq(TComment::getBlogId, id);
@@ -91,6 +100,7 @@ public class TCommentServiceImpl extends ServiceImpl<TCommentMapper, TComment>
             commentDTO.setUserName(user.getNickName());
             return commentDTO;
         }).collect(Collectors.toList());
+        mongoTemplate.insertAll(dtoList);
         return Result.success(dtoList);
     }
 }

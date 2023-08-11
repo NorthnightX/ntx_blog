@@ -6,15 +6,19 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.MongoId;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Document("comment")
 public class CommentDTO {
 
     @TableId(type = IdType.AUTO)
+    @MongoId
     private Integer id;
 
     private String comment;

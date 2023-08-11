@@ -1,14 +1,19 @@
 package com.ntx.blog.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.ntx.blog.domain.TBlog;
 import com.ntx.blog.domain.TComment;
 import com.ntx.blog.domain.TLikeBlog;
 import com.ntx.blog.dto.BlogDTO;
+import com.ntx.blog.dto.CommentDTO;
 import com.ntx.blog.mapper.TCommentMapper;
 import com.ntx.blog.service.TBlogService;
+import com.ntx.blog.service.TCommentService;
 import com.ntx.blog.service.TLikeBlogService;
+import com.ntx.common.client.UserClient;
+import com.ntx.common.domain.TUser;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.DocWriteResponse;
@@ -31,9 +36,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.ntx.blog.common.SystemContent.*;
@@ -49,9 +57,11 @@ public class BlogKafkaQueryListener {
     @Autowired
     private TLikeBlogService likeBlogService;
     @Autowired
-    private TCommentMapper commentMapper;
-    @Autowired
     private MongoTemplate mongoTemplate;
+    @Autowired
+    private UserClient userClient;
+    @Autowired
+    private TCommentService commentService;
 
 
     /**
@@ -119,22 +129,33 @@ public class BlogKafkaQueryListener {
      * @param record
      */
     @KafkaListener(topics = "blogComment", groupId = "blogComment")
+    @Transactional
     public void topicListener3(ConsumerRecord<String, String> record) throws IOException {
         String value = record.value();
         TComment comment = JSON.parseObject(value, TComment.class);
         comment.setDeleted(1);
         comment.setCreateTime(LocalDateTime.now());
         comment.setModifyTime(LocalDateTime.now());
-        commentMapper.saveComment(comment);
+        commentService.save(comment);
         //评论完成后，将blog的评论数+1
         blogService.update().setSql("comment = comment + 1").eq("id", comment.getBlogId()).update();
         TBlog blog = blogService.getById(comment.getBlogId());
-        //修改MongoDB评论数
+        //修改MongoDB评论数，增加评论
         Criteria criteria = Criteria.where("_id").is(comment.getBlogId());
         Query query = new Query();
         query.addCriteria(criteria);
         Update update = new Update().set("comment", blog.getComment());
         mongoTemplate.updateFirst(query, update, BlogDTO.class);
+        CommentDTO commentDTO = new CommentDTO();
+        BeanUtil.copyProperties(comment, commentDTO);
+        Integer userId = comment.getUserId();
+        List<TUser> userList =
+                userClient.getByIds(Collections.singletonList(userId));
+        userList.forEach(tUser -> {
+            commentDTO.setUserName(tUser.getNickName());
+            commentDTO.setUserImage(tUser.getImage());
+        });
+        mongoTemplate.insert(commentDTO);
         //修改ES的评论数
         UpdateRequest updateRequest = new UpdateRequest("blog", String.valueOf(comment.getBlogId()));
         updateRequest.doc("comment", blog.getComment());

@@ -31,7 +31,6 @@ public class CommentController {
     @PostMapping("/addComment")
     public Result addComment(@RequestBody TComment comment){
         kafkaTemplate.send("blogComment","", JSON.toJSONString(comment));
-//        return commentService.saveComment(comment);
         return Result.success("评论成功");
     }
 
