@@ -1,6 +1,7 @@
 package com.ntx.blog.controller;
 
 import com.alibaba.fastjson.JSON;
+import com.ntx.blog.VO.DeleteCommentVO;
 import com.ntx.blog.domain.TComment;
 import com.ntx.blog.service.TBlogService;
 import com.ntx.blog.service.TCommentService;
@@ -9,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
 
 
 @RestController
@@ -44,6 +47,14 @@ public class CommentController {
         return commentService.getCommentByBlog(id);
     }
 
-
+    /**
+     * 删除评论
+     * @param commentVO
+     * @return
+     */
+    @PutMapping("/deleteComment")
+    public Result deleteComment(@RequestBody DeleteCommentVO commentVO) throws IOException {
+        return commentService.deleteComment(commentVO);
+    }
 
 }

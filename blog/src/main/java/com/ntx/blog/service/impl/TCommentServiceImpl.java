@@ -3,7 +3,10 @@ package com.ntx.blog.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.ntx.blog.VO.DeleteCommentVO;
+import com.ntx.blog.domain.TBlog;
 import com.ntx.blog.domain.TComment;
+import com.ntx.blog.dto.BlogDTO;
 import com.ntx.blog.dto.CommentDTO;
 import com.ntx.blog.service.TBlogService;
 import com.ntx.blog.service.TCommentService;
@@ -12,15 +15,20 @@ import com.ntx.blog.mapper.TCommentMapper;
 import com.ntx.common.client.UserClient;
 import com.ntx.common.domain.Result;
 import com.ntx.common.domain.TUser;
+import org.elasticsearch.action.update.UpdateRequest;
+import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.RestHighLevelClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.io.IOException;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -33,35 +41,13 @@ public class TCommentServiceImpl extends ServiceImpl<TCommentMapper, TComment>
         implements TCommentService {
 
     @Autowired
-    private TCommentMapper commentMapper;
-    @Autowired
-    private StringRedisTemplate stringRedisTemplate;
-    @Autowired
     private UserClient userClient;
     @Autowired
     private TBlogService blogService;
     @Autowired
     private MongoTemplate mongoTemplate;
-
-//    /**
-//     * 新增评论
-//     * @param comment
-//     * @return
-//     */
-//    @Override
-//    public Result saveComment(TComment comment) {
-//        comment.setDeleted(1);
-//        comment.setCreateTime(LocalDateTime.now());
-//        comment.setModifyTime(LocalDateTime.now());
-//        Boolean save = commentMapper.saveComment(comment);
-//        //评论完成后，将blog的评论数+1
-//        if (save) {
-//            boolean update = blogService.update().setSql("comment = comment + 1").eq("id", comment.getBlogId()).update();
-//            return update ? Result.success("评论成功") : Result.error("网络异常");
-//        }
-//        return Result.error("网络异常");
-//    }
-
+    @Autowired
+    private RestHighLevelClient client;
     /**
      * 根据blog查找评论
      *
@@ -100,8 +86,68 @@ public class TCommentServiceImpl extends ServiceImpl<TCommentMapper, TComment>
             commentDTO.setUserName(user.getNickName());
             return commentDTO;
         }).collect(Collectors.toList());
+        //填充信息回MongoDB
         mongoTemplate.insertAll(dtoList);
         return Result.success(dtoList);
+    }
+
+    @Override
+    @Transactional
+    public Result deleteComment(DeleteCommentVO commentVO) throws IOException {
+        //获取博客信息
+        TBlog blog = blogService.getById(commentVO.getBlogId());
+        //获取博客博主Id
+        Integer blogger = blog.getBlogger();
+        //获取评论信息
+        TComment comment = this.getById(commentVO.getCommentId());
+        //获取评论人Id
+        Integer commentUserId = comment.getUserId();
+        //获取删除者Id
+        Integer deleteUserId = commentVO.getUserId();
+        //如果删除者是博客博主或者评论发表人
+        if(Objects.equals(deleteUserId, blogger) || Objects.equals(deleteUserId, commentUserId)){
+            boolean delete = updateDeleteForComment(blog, comment.getId());
+            if(delete){
+                return Result.success("删除成功");
+            }
+        }
+        List<TUser> userList = userClient.getByIds(Collections.singletonList(deleteUserId));
+        for (TUser user : userList) {
+            //如果用户是管理员
+            if(user.getRole() == 1){
+                boolean delete = updateDeleteForComment(blog, comment.getId());
+                if(delete){
+                    return Result.success("删除成功");
+                }
+            }
+        }
+        return Result.error("您没有权限删除该条评论");
+    }
+
+
+    private boolean updateDeleteForComment(TBlog blog, Integer commentId) throws IOException {
+        //修改博客评论数
+        Integer blogId = blog.getId();
+        blogService.update().eq("id", blogId).setSql("comment = comment - 1").update();
+        //修改评论的deleted字段
+        boolean update = this.update().eq("id", commentId).setSql("deleted = 2").update();
+        if(update){
+            //移除MongoDB的评论
+            Query query = new Query();
+            query.addCriteria(Criteria.where("_id").is(commentId));
+            mongoTemplate.remove(query, CommentDTO.class);
+            //修改MongoDB中的Blog的评论数量
+            Query blogQuery = new Query(Criteria.where("_id").is(blogId));
+            Update updateBlog = new Update();
+            updateBlog.inc("comment", -1);
+            mongoTemplate.updateFirst(blogQuery, updateBlog, BlogDTO.class);
+            //修改ES的评论
+            UpdateRequest request = new UpdateRequest("blog", String.valueOf(blogId));
+            request.doc("comment", blog.getComment() - 1);
+            client.update(request, RequestOptions.DEFAULT);
+            return true;
+        }
+        return false;
     }
 }
 
