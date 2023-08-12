@@ -104,13 +104,13 @@ public class TLikeBlogServiceImpl extends ServiceImpl<TLikeBlogMapper, TLikeBlog
         if (BooleanUtil.isTrue(hasKey)) {
             Set<String> members = stringRedisTemplate.opsForSet().members(redisKey);
             List<String> collect = members != null ? new ArrayList<>(members) : new ArrayList<>();
-            return Result.success(collect);
-        }
-        //redis中没有
-        //查找数据
-        LambdaQueryWrapper<TLikeBlog> queryWrapper = new LambdaQueryWrapper<>();
+        return Result.success(collect);
+    }
+    //redis中没有
+    //查找数据
+    LambdaQueryWrapper<TLikeBlog> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TLikeBlog::getId, userId).eq(TLikeBlog::getIsLike, 1);
-        List<TLikeBlog> list = this.list(queryWrapper);
+    List<TLikeBlog> list = this.list(queryWrapper);
         //如果数据库没有
         if (list.isEmpty()) {
             //缓存空对象，防止缓存穿透

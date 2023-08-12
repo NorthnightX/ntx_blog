@@ -6,15 +6,15 @@ import cn.hutool.core.util.RandomUtil;
 import cn.hutool.crypto.digest.MD5;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.ntx.common.VO.UpdateUserForm;
 import com.ntx.common.client.BlogClient;
+import com.ntx.common.domain.Result;
 import com.ntx.common.domain.TUser;
 import com.ntx.user.DTO.UserDTO;
-import com.ntx.common.VO.UpdateUserForm;
+import com.ntx.user.common.ImageVerificationCode;
 import com.ntx.user.domain.LoginForm;
 import com.ntx.user.mapper.TUserMapper;
 import com.ntx.user.service.TUserService;
-import com.ntx.user.common.ImageVerificationCode;
-import com.ntx.common.domain.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -24,6 +24,7 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.HashMap;
@@ -56,6 +57,7 @@ public class TUserServiceImpl extends ServiceImpl<TUserMapper, TUser> implements
 
     /**
      * 登录
+     *
      * @param loginForm
      * @return
      */
@@ -69,7 +71,7 @@ public class TUserServiceImpl extends ServiceImpl<TUserMapper, TUser> implements
                 String phone = loginForm.getPhone();
                 String phoneCode = loginForm.getPhoneCode();
                 String redisKey = PHONE_CODE + phone;
-                if(!phoneCode.equals(stringRedisTemplate.opsForValue().get(redisKey))){
+                if (!phoneCode.equals(stringRedisTemplate.opsForValue().get(redisKey))) {
                     return Result.error("验证码错误");
                 }
                 //验证码正确
@@ -93,7 +95,7 @@ public class TUserServiceImpl extends ServiceImpl<TUserMapper, TUser> implements
         LambdaQueryWrapper<TUser> userLambdaQueryWrapper = new LambdaQueryWrapper<>();
         userLambdaQueryWrapper.eq(TUser::getName, loginForm.getUsername());
         TUser user = this.getOne(userLambdaQueryWrapper);
-        if(user == null){
+        if (user == null) {
             return Result.error("未找到此用户，请先注册");
         }
         //如果密码相等
@@ -107,10 +109,11 @@ public class TUserServiceImpl extends ServiceImpl<TUserMapper, TUser> implements
 
     /**
      * 设置userDTO
+     *
      * @param user
      * @return
      */
-    private UserDTO setUserInfoForReturn(TUser user){
+    private UserDTO setUserInfoForReturn(TUser user) {
         UserDTO userDTO = new UserDTO();
         BeanUtil.copyProperties(user, userDTO);
         Integer id = userDTO.getId();
@@ -118,21 +121,47 @@ public class TUserServiceImpl extends ServiceImpl<TUserMapper, TUser> implements
         Map<String, Object> userMap = BeanUtil.beanToMap(
                 userDTO, new HashMap<>(), CopyOptions.create().
                         setIgnoreNullValue(true).setFieldValueEditor((fieldKey, fieldValue) -> {
-                            if(fieldValue == null){
+                            if (fieldValue == null) {
                                 fieldValue = "0";
                             } else {
                                 fieldValue = fieldValue + "";
                             }
-                            return fieldValue;}));
+                            return fieldValue;
+                        }));
         stringRedisTemplate.opsForHash().putAll(redisKey, userMap);
         stringRedisTemplate.expire(redisKey, LOGIN_USER_TTL, TimeUnit.DAYS);
         stringRedisTemplate.opsForHyperLogLog().add(LOGIN_USER_COUNT, String.valueOf(user.getId()));
-        stringRedisTemplate.expire(LOGIN_USER_COUNT, LOGIN_USER_COUNT_TTL, TimeUnit.DAYS);
+        //更新ttl为当日剩余时间
+        //加锁
+        Boolean lock = getLock();
+        if (lock) {
+            try {
+                LocalDateTime now = LocalDateTime.now();
+                LocalDateTime endOfDay = now.toLocalDate().atTime(23, 59, 59);
+                Duration duration = Duration.between(now, endOfDay);
+                stringRedisTemplate.expire(LOGIN_USER_COUNT, duration.getSeconds(), TimeUnit.SECONDS);
+            } finally {
+                closeLock();
+            }
+        }
         return userDTO;
+    }
+
+    private Boolean getLock() {
+        Boolean aBoolean = stringRedisTemplate.opsForValue().setIfAbsent(TIME_LOCK, "1");
+        if (Boolean.TRUE.equals(aBoolean)) {
+            stringRedisTemplate.expire(TIME_LOCK, 5, TimeUnit.SECONDS);
+        }
+        return aBoolean;
+    }
+
+    private void closeLock() {
+        stringRedisTemplate.delete(TIME_LOCK);
     }
 
     /**
      * 获取验证码
+     *
      * @return
      * @throws IOException
      */
@@ -162,6 +191,7 @@ public class TUserServiceImpl extends ServiceImpl<TUserMapper, TUser> implements
 
     /**
      * 生成手机验证码
+     *
      * @param phone
      * @return
      */
@@ -170,7 +200,7 @@ public class TUserServiceImpl extends ServiceImpl<TUserMapper, TUser> implements
         LambdaQueryWrapper<TUser> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TUser::getPhone, phone);
         TUser user = this.getOne(queryWrapper);
-        if(user == null){
+        if (user == null) {
             return Result.error("请先注册");
         }
         String redisKey = PHONE_CODE + phone;
@@ -191,6 +221,7 @@ public class TUserServiceImpl extends ServiceImpl<TUserMapper, TUser> implements
 
     /**
      * 更新用户数据
+     *
      * @param userForm
      * @return
      */
@@ -199,14 +230,14 @@ public class TUserServiceImpl extends ServiceImpl<TUserMapper, TUser> implements
     public Result updateByUserById(UpdateUserForm userForm) {
         String field = userForm.getField();
         Integer id = userForm.getId();
-        if(field.equals("image")){
-            String image =  userForm.getImage();
+        if (field.equals("image")) {
+            String image = userForm.getImage();
             boolean update = this.update().
                     eq("id", id).setSql("image = " + " \" " + image + " \" ").
-                    setSql("gmt_modified = " +  " \" " + LocalDateTime.now() + " \" ").update();
-            if(update){
+                    setSql("gmt_modified = " + " \" " + LocalDateTime.now() + " \" ").update();
+            if (update) {
                 Boolean mongoDAndES = updateBLogInMongoDAndES(userForm);
-                if(mongoDAndES){
+                if (mongoDAndES) {
                     return Result.success("修改成功");
                 }
             }
@@ -214,7 +245,7 @@ public class TUserServiceImpl extends ServiceImpl<TUserMapper, TUser> implements
         return Result.error("网络异常");
     }
 
-    private Boolean updateBLogInMongoDAndES(UpdateUserForm userForm){
+    private Boolean updateBLogInMongoDAndES(UpdateUserForm userForm) {
         return blogClient.updateBLogInMongoDAndES(userForm);
     }
 }

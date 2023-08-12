@@ -67,7 +67,7 @@ public class BlogKafkaQueryListener {
     /**
      * kafka的监听器,增加文章阅读量
      * 功能已完成
-     *
+     *  新需求：博主自己看不加点击量，普通用户每小时只有一次点击为有效点击
      * @param record
      */
     @KafkaListener(topics = "blogView", groupId = "blogView")
@@ -207,6 +207,7 @@ public class BlogKafkaQueryListener {
                 if (update) {
                     //向redis中添加用户的点赞信息
                     stringRedisTemplate.opsForSet().add(BLOG_LIKE_KEY + likeBlog.getUserId(), String.valueOf(likeBlog.getBlogId()));
+                    stringRedisTemplate.persist(BLOG_LIKE_KEY + likeBlog.getUserId());
                     //修改MongoDB
                     Query query = new Query();
                     query.addCriteria(Criteria.where("_id").is(likeBlog.getBlogId()));
@@ -227,6 +228,7 @@ public class BlogKafkaQueryListener {
                 stringRedisTemplate.opsForSet().remove(BLOG_OPPOSE_KEY + likeBlog.getUserId(), blogId);
                 //向用户点赞set添加数据
                 stringRedisTemplate.opsForSet().add(BLOG_LIKE_KEY + likeBlog.getUserId(), String.valueOf(likeBlog.getBlogId()));
+                stringRedisTemplate.persist(BLOG_LIKE_KEY + likeBlog.getUserId());
                 //修改MongoDB
                 Query query = new Query();
                 query.addCriteria(Criteria.where("_id").is(likeBlog.getBlogId()));

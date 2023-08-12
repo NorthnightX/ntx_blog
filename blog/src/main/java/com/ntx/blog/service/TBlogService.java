@@ -29,5 +29,7 @@ public interface TBlogService extends IService<TBlog> {
 
     Result getBlogById(int id);
 
+    Result userLikeBlogs(int id);
+
 //    Result saveBlog(TBlog blog) throws IOException;
 }

@@ -203,4 +203,9 @@ public class BlogController {
         return blogService.getMaxWatchInTwoDays();
     }
 
+    @GetMapping("/userLikeBlogs/{id}")
+    public Result userLikeBlogs(@PathVariable int id){
+        return blogService.userLikeBlogs(id);
+    }
+
 }

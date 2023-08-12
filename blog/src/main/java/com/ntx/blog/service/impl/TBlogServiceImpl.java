@@ -3,13 +3,16 @@ package com.ntx.blog.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.api.R;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.ntx.blog.domain.TBlog;
+import com.ntx.blog.domain.TLikeBlog;
 import com.ntx.blog.dto.BlogDTO;
 import com.ntx.blog.mapper.TBlogMapper;
 import com.ntx.blog.service.TBlogService;
 
+import com.ntx.blog.service.TLikeBlogService;
 import com.ntx.common.VO.UpdateUserForm;
 import com.ntx.common.client.BlogTypeClient;
 import com.ntx.common.client.UserClient;
@@ -44,15 +47,11 @@ import org.springframework.util.CollectionUtils;
 
 import java.io.IOException;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static com.ntx.blog.common.SystemContent.BLOG_CLICK;
-import static com.ntx.blog.common.SystemContent.BLOG_LEADERBOARD;
+import static com.ntx.blog.common.SystemContent.*;
 
 /**
 * @author NorthnightX
@@ -73,7 +72,8 @@ public  class TBlogServiceImpl extends ServiceImpl<TBlogMapper, TBlog>
     private StringRedisTemplate stringRedisTemplate;
     @Autowired
     private BlogTypeClient blogTypeClient;
-
+    @Autowired
+    private TLikeBlogService likeBlogService;
     @Autowired
     private UserClient userClient;
     @Autowired
@@ -250,23 +250,7 @@ public  class TBlogServiceImpl extends ServiceImpl<TBlogMapper, TBlog>
         if(list.isEmpty()){
             return Result.success(new ArrayList<>());
         }
-        List<Integer> userIdList = list.stream().map(TBlog::getBlogger).collect(Collectors.toList());
-        List<Integer> typeIdList = list.stream().map(TBlog::getTypeId).collect(Collectors.toList());
-        Map<Integer, TUser> userMap =
-                userClient.getByIds(userIdList).stream().collect(Collectors.toMap(TUser::getId, tUser -> tUser));
-        Map<Integer, TBlogType> blogTypeMap = blogTypeClient.
-                getByTypeIds(typeIdList).stream().collect(Collectors.toMap(TBlogType::getId, blogType -> blogType));
-        List<BlogDTO> dtoList = list.stream().map(blog -> {
-            BlogDTO blogDTO = new BlogDTO();
-            BeanUtil.copyProperties(blog, blogDTO);
-            TUser user = userMap.get(blog.getBlogger());
-            TBlogType tBlogType = blogTypeMap.get(blog.getTypeId());
-            blogDTO.setBloggerId(user.getId());
-            blogDTO.setBloggerName(user.getNickName());
-            blogDTO.setBloggerImage(user.getImage());
-            blogDTO.setTypeName(tBlogType.getName());
-            return blogDTO;
-        }).collect(Collectors.toList());
+        List<BlogDTO> dtoList = PopulatingBlogDTOData(list);
         //将数据储存到MongoDB
         mongoTemplate.insertAll(dtoList);
         return Result.success(dtoList);
@@ -312,6 +296,89 @@ public  class TBlogServiceImpl extends ServiceImpl<TBlogMapper, TBlog>
         return Result.success(blogDTO);
     }
 
+    /**
+     * 查询用户喜欢的博客
+     * @param id
+     * @return
+     */
+    @Override
+    public Result userLikeBlogs(int id) {
+        String redisKey = BLOG_LIKE_KEY + id;
+        //查询用户喜欢
+        Set<String> members = stringRedisTemplate.opsForSet().members(redisKey);
+        Query query = new Query();
+        //如果缓存命中
+        if (members != null && !members.isEmpty()) {
+            if (members.size() == 1 && members.contains("")) {
+                return Result.success(new ArrayList<>());
+            }
+            query.addCriteria(Criteria.where("_id").in(members));
+            List<BlogDTO> blogDTOList = mongoTemplate.find(query, BlogDTO.class);
+            //如果mongoDB中有
+            if (!blogDTOList.isEmpty()) {
+                return Result.success(blogDTOList);
+            }
+            //如果mongoDB中没有
+            return Result.success(queryBlogByUserLike(members));
+        }
+        //缓存未命中，查询用户喜欢
+        LambdaQueryWrapper<TLikeBlog> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TLikeBlog::getUserId, id);
+        queryWrapper.select(TLikeBlog::getBlogId);
+        Set<String> blogIds = likeBlogService.list(queryWrapper).
+                stream().map(tLikeBlog -> tLikeBlog.getBlogId().toString()).
+                collect(Collectors.toSet());
+        System.out.println(Arrays.toString(blogIds.toArray()));
+        //如果用户没有喜欢的blog,缓存空对象
+        if(blogIds.isEmpty()){
+            stringRedisTemplate.opsForSet().add(redisKey,"");
+            stringRedisTemplate.expire(redisKey, BLOG_LIKE_IS_NULL_TTL, TimeUnit.MINUTES);
+            return Result.success(new ArrayList<>());
+        }
+        //如果查到了，添加缓存
+        blogIds.forEach(blogId -> {
+            stringRedisTemplate.opsForSet().add(redisKey, blogId);
+        });
+        query.addCriteria(Criteria.where("_id").is(id));
+        List<BlogDTO> blogDTOList = mongoTemplate.find(query, BlogDTO.class);
+        if(!blogDTOList.isEmpty()){
+            return Result.success(blogDTOList);
+        }
+        return Result.success(queryBlogByUserLike(blogIds));
+    }
+
+    private List<BlogDTO> queryBlogByUserLike(Set<String> members) {
+        LambdaQueryWrapper<TBlog> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(TBlog::getId, members);
+        List<TBlog> list = this.list(queryWrapper);
+        return PopulatingBlogDTOData(list);
+
+    }
+
+    /**
+     * 填充blogDTO
+     * @param list
+     * @return
+     */
+    private List<BlogDTO> PopulatingBlogDTOData(List<TBlog> list){
+        List<Integer> userIdList = list.stream().map(TBlog::getBlogger).collect(Collectors.toList());
+        List<Integer> typeIdList = list.stream().map(TBlog::getTypeId).collect(Collectors.toList());
+        Map<Integer, TUser> userMap =
+                userClient.getByIds(userIdList).stream().collect(Collectors.toMap(TUser::getId, tUser -> tUser));
+        Map<Integer, TBlogType> blogTypeMap = blogTypeClient.
+                getByTypeIds(typeIdList).stream().collect(Collectors.toMap(TBlogType::getId, blogType -> blogType));
+        return list.stream().map(blog -> {
+            BlogDTO blogDTO = new BlogDTO();
+            BeanUtil.copyProperties(blog, blogDTO);
+            TUser user = userMap.get(blog.getBlogger());
+            TBlogType tBlogType = blogTypeMap.get(blog.getTypeId());
+            blogDTO.setBloggerId(user.getId());
+            blogDTO.setBloggerName(user.getNickName());
+            blogDTO.setBloggerImage(user.getImage());
+            blogDTO.setTypeName(tBlogType.getName());
+            return blogDTO;
+        }).collect(Collectors.toList());
+    }
 
 }
 
