@@ -339,7 +339,7 @@ public  class TBlogServiceImpl extends ServiceImpl<TBlogMapper, TBlog>
     }
 
     /**
-     * 查询用户喜欢的博客 !!!!!!缓存似乎有问题
+     * 查询用户喜欢的博客
      * @param id
      * @return
      */

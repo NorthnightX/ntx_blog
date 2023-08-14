@@ -79,15 +79,16 @@ public class BlogKafkaQueryListener {
         String value = record.value();
         int id = Integer.parseInt(value);
         //先改数据库
-        blogService.update().eq("id", id).setSql("clickCount = clickCount + 1").update();
+        blogService.update().eq("id", id).setSql("click_count = click_count + 1").update();
         //修改mongoDB
+        TBlog tBlog = blogService.getById(id);
         Criteria criteria = Criteria.where("_id").is(id);
         Query query = new Query(criteria);
-        Update update = new Update().set("clickCount", id);
+        Update update = new Update().set("clickCount", tBlog.getClickCount());
         mongoTemplate.updateFirst(query, update, BlogDTO.class);
         //修改es的点击量
         UpdateRequest request = new UpdateRequest("blog", String.valueOf(id));
-        request.doc("clickCount", id);
+        request.doc("clickCount", tBlog.getClickCount());
         client.update(request, RequestOptions.DEFAULT);
         //修改redis的阅读排行zset
         stringRedisTemplate.opsForZSet().incrementScore(BLOG_CLICK + LocalDate.now(), String.valueOf(id), 1);

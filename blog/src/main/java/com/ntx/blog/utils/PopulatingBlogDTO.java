@@ -11,16 +11,21 @@ import com.ntx.common.domain.TUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 @Service
-public class PopulatingBlogDTO {
+public class PopulatingBlogDTO  {
     @Autowired
     private BlogTypeClient blogTypeClient;
     @Autowired
     private UserClient userClient;
+
     public List<BlogDTO> PopulatingBlogDTOData(List<TBlog> list){
+        if(list.isEmpty()){
+            return new ArrayList<>();
+        }
         List<Integer> userIdList = list.stream().map(TBlog::getBlogger).collect(Collectors.toList());
         List<Integer> typeIdList = list.stream().map(TBlog::getTypeId).collect(Collectors.toList());
         Map<Integer, TUser> userMap =
