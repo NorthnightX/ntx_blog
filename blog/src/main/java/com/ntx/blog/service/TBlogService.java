@@ -2,6 +2,7 @@ package com.ntx.blog.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.ntx.blog.domain.TBlog;
+import com.ntx.blog.dto.BlogDTO;
 import com.ntx.common.VO.UpdateUserForm;
 import com.ntx.common.domain.Result;
 
@@ -15,7 +16,7 @@ import java.util.List;
 */
 public interface TBlogService extends IService<TBlog> {
 
-    int updateBlodById(TBlog blog);
+    int updateBlodById(BlogDTO blog) throws IOException;
 
     List<TBlog> getPage(Integer pageNum, Integer pageSize, TBlog tBlog);
 
@@ -30,6 +31,12 @@ public interface TBlogService extends IService<TBlog> {
     Result getBlogById(int id);
 
     Result userLikeBlogs(int id);
+
+    Result deleteBLog(int id) throws IOException;
+
+    Result recycleBinBlog(int id);
+
+    Result recoverBlog(BlogDTO id) throws IOException;
 
 //    Result saveBlog(TBlog blog) throws IOException;
 }

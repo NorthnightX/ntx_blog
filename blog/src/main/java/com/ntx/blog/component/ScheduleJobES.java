@@ -24,6 +24,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Component
@@ -65,12 +66,14 @@ public class ScheduleJobES {
             blogDTO.setBloggerImage(user.getImage());
             blogDTO.setBloggerId(user.getId());
             blogDTO.setBloggerName(user.getNickName());
-            //更新mongoDB
-            mongoTemplate.save(blogDTO);
-            //index方式会替换掉原本的文档，create如果文档存在会返回错误，update是局部更新
-            request.add(new IndexRequest("blog").
-                    id(String.valueOf(blogDTO.getId())).
-                    source(JSON.toJSONString(blogDTO), XContentType.JSON));
+            if(blogDTO.getDeleted() == 1){
+                //更新mongoDB
+                mongoTemplate.save(blogDTO);
+                //index方式会替换掉原本的文档，create如果文档存在会返回错误，update是局部更新
+                request.add(new IndexRequest("blog").
+                        id(String.valueOf(blogDTO.getId())).
+                        source(JSON.toJSONString(blogDTO), XContentType.JSON));
+            }
         });
         //3.发送请求
         client.bulk(request, RequestOptions.DEFAULT);

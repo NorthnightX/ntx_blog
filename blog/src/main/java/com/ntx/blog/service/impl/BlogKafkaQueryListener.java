@@ -12,6 +12,7 @@ import com.ntx.blog.mapper.TCommentMapper;
 import com.ntx.blog.service.TBlogService;
 import com.ntx.blog.service.TCommentService;
 import com.ntx.blog.service.TLikeBlogService;
+import com.ntx.blog.utils.PopulatingBlogDTO;
 import com.ntx.common.client.UserClient;
 import com.ntx.common.domain.TUser;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -39,6 +40,7 @@ import java.io.IOException;
 import java.lang.reflect.Array;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -62,6 +64,8 @@ public class BlogKafkaQueryListener {
     private UserClient userClient;
     @Autowired
     private TCommentService commentService;
+    @Autowired
+    private PopulatingBlogDTO populatingBlogDTO;
 
 
     /**
@@ -74,21 +78,19 @@ public class BlogKafkaQueryListener {
     public void topicListener1(ConsumerRecord<String, String> record) throws IOException {
         String value = record.value();
         int id = Integer.parseInt(value);
-        TBlog tBlog = blogService.getById(id);
-        tBlog.setClickCount(tBlog.getClickCount() + 1);
         //先改数据库
-        blogService.updateBlodById(tBlog);
+        blogService.update().eq("id", id).setSql("clickCount = clickCount + 1").update();
         //修改mongoDB
-        Criteria criteria = Criteria.where("_id").is(tBlog.getId());
+        Criteria criteria = Criteria.where("_id").is(id);
         Query query = new Query(criteria);
-        Update update = new Update().set("clickCount", tBlog.getClickCount());
+        Update update = new Update().set("clickCount", id);
         mongoTemplate.updateFirst(query, update, BlogDTO.class);
         //修改es的点击量
         UpdateRequest request = new UpdateRequest("blog", String.valueOf(id));
-        request.doc("clickCount", tBlog.getClickCount());
+        request.doc("clickCount", id);
         client.update(request, RequestOptions.DEFAULT);
         //修改redis的阅读排行zset
-        stringRedisTemplate.opsForZSet().incrementScore(BLOG_CLICK + LocalDate.now(), String.valueOf(tBlog.getId()), 1);
+        stringRedisTemplate.opsForZSet().incrementScore(BLOG_CLICK + LocalDate.now(), String.valueOf(id), 1);
         stringRedisTemplate.expire(BLOG_CLICK + LocalDate.now(), 7, TimeUnit.DAYS);
     }
 
@@ -113,13 +115,20 @@ public class BlogKafkaQueryListener {
         blog.setDeleted(1);
         blog.setStatus(1);
         blogService.save(blog);
+        ArrayList<TBlog> arrayList = new ArrayList<>();
+        arrayList.add(blog);
+        List<BlogDTO> blogDTOList = populatingBlogDTO.PopulatingBlogDTOData(arrayList);
         //保存到ES
         //创建request
         IndexRequest request = new IndexRequest("blog").id(blog.getId().toString());
         //准备json数据
-        request.source(JSON.toJSONString(blog), XContentType.JSON);
-        //发送请求
-        client.index(request, RequestOptions.DEFAULT);
+        for (BlogDTO blogDTO : blogDTOList) {
+            request.source(JSON.toJSONString(blogDTO), XContentType.JSON);
+            //发送请求
+            client.index(request, RequestOptions.DEFAULT);
+            //保存到MongoDB
+            mongoTemplate.insert(blogDTO);
+        }
     }
 
 

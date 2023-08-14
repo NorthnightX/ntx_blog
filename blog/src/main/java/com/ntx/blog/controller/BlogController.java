@@ -3,6 +3,7 @@ package com.ntx.blog.controller;
 import cn.hutool.core.bean.BeanUtil;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.api.R;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ntx.blog.domain.TBlog;
 import com.ntx.blog.dto.BlogDTO;
@@ -120,13 +121,12 @@ public class BlogController {
     /**
      * 更新blog信息
      *
-     * @param blog
+     * @param blogDTO
      * @return
      */
     @PutMapping("/updateBlog")
-    public Result updateBlog(@RequestBody TBlog blog) {
-        blog.setGmtModified(LocalDateTime.now());
-        int updated = blogService.updateBlodById(blog);
+    public Result updateBlog(@RequestBody BlogDTO blogDTO) throws IOException {
+        int updated = blogService.updateBlodById(blogDTO);
         if (updated == 1) {
             return Result.success("修改成功");
         } else {
@@ -208,4 +208,32 @@ public class BlogController {
         return blogService.userLikeBlogs(id);
     }
 
+    /**
+     * 删除博客
+     * @param id
+     * @return
+     */
+    @PutMapping("/deleteBlog/{id}")
+    public Result deleteBlog(@PathVariable int id) throws IOException {
+        return blogService.deleteBLog(id);
+    }
+
+    /**
+     * 查询用户删除的blog
+     * @param id
+     * @return
+     */
+    @GetMapping("/recycleBinBlog/{id}")
+    public Result recycleBinBlog(@PathVariable int id){
+        return blogService.recycleBinBlog(id);
+    }
+
+    /**
+     * 恢复blog
+     * @return
+     */
+    @PutMapping("/recoverBlog")
+    public Result recoverBlog(@RequestBody BlogDTO blogDTO) throws IOException {
+        return blogService.recoverBlog(blogDTO);
+    }
 }

@@ -3,16 +3,17 @@ package com.ntx.blog.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.api.R;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.ntx.blog.domain.TBlog;
 import com.ntx.blog.domain.TLikeBlog;
 import com.ntx.blog.dto.BlogDTO;
+import com.ntx.blog.dto.CommentDTO;
 import com.ntx.blog.mapper.TBlogMapper;
 import com.ntx.blog.service.TBlogService;
 
 import com.ntx.blog.service.TLikeBlogService;
+import com.ntx.blog.utils.PopulatingBlogDTO;
 import com.ntx.common.VO.UpdateUserForm;
 import com.ntx.common.client.BlogTypeClient;
 import com.ntx.common.client.UserClient;
@@ -20,12 +21,14 @@ import com.ntx.common.domain.Result;
 import com.ntx.common.domain.TBlogType;
 import com.ntx.common.domain.TUser;
 import org.apache.lucene.search.TotalHits;
-import org.elasticsearch.action.bulk.BulkRequest;
+import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
@@ -37,7 +40,6 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -47,6 +49,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -78,11 +81,50 @@ public  class TBlogServiceImpl extends ServiceImpl<TBlogMapper, TBlog>
     private UserClient userClient;
     @Autowired
     private KafkaTemplate<String,String> kafkaTemplate;
+    @Autowired
+    private PopulatingBlogDTO populatingBlogDTO;
 
-
+    /**
+     * 更新BLog
+     * @param blogDTO
+     * @return
+     */
     @Override
-    public int updateBlodById(TBlog blog) {
-        return blogMapper.updateBlogById(blog);
+    public int updateBlodById(BlogDTO blogDTO) throws IOException {
+        blogDTO.setGmtModified(LocalDateTime.now());
+        //更新数据库
+        TBlog blog = new TBlog();
+        BeanUtil.copyProperties(blogDTO, blog);
+        boolean b = this.updateById(blog);
+        if(!b){
+            return 2;
+        }
+        TBlogType byTypeId = blogTypeClient.getByTypeId(blog.getTypeId());
+        String name = byTypeId.getName();
+        blogDTO.setTypeName(name);
+        //根据DTO更新ES
+        UpdateRequest request = new UpdateRequest("blog", String.valueOf(blog.getId()));
+        request.doc("title", blogDTO.getTitle(),
+                "image", blogDTO.getImage(),
+                "content", blogDTO.getContent(),
+                "typeId", blogDTO.getTypeId(),
+                "typeName", blogDTO.getTypeName(),
+                "gmtModified", blogDTO.getGmtModified(),
+                "isPublic", blogDTO.getIsPublic());
+        client.update(request, RequestOptions.DEFAULT);
+        //根据DTO更新MongoDB
+        Query query = new Query();
+        query.addCriteria(Criteria.where("_id").is(blog.getId()));
+        Update update = new Update().set("title", blogDTO.getTitle())
+                .set("image", blogDTO.getImage())
+                .set("content", blogDTO.getContent())
+                .set("typeId", blogDTO.getTypeId())
+                .set("typeName", blogDTO.getTypeName())
+                .set("gmtModified", blogDTO.getGmtModified())
+                .set("isPublic", blogDTO.getIsPublic());
+        mongoTemplate.updateFirst(query, update, BlogDTO.class);
+        return 1;
+
     }
 
     @Override
@@ -250,7 +292,7 @@ public  class TBlogServiceImpl extends ServiceImpl<TBlogMapper, TBlog>
         if(list.isEmpty()){
             return Result.success(new ArrayList<>());
         }
-        List<BlogDTO> dtoList = PopulatingBlogDTOData(list);
+        List<BlogDTO> dtoList = populatingBlogDTO.PopulatingBlogDTOData(list);
         //将数据储存到MongoDB
         mongoTemplate.insertAll(dtoList);
         return Result.success(dtoList);
@@ -297,7 +339,7 @@ public  class TBlogServiceImpl extends ServiceImpl<TBlogMapper, TBlog>
     }
 
     /**
-     * 查询用户喜欢的博客
+     * 查询用户喜欢的博客 !!!!!!缓存似乎有问题
      * @param id
      * @return
      */
@@ -344,41 +386,68 @@ public  class TBlogServiceImpl extends ServiceImpl<TBlogMapper, TBlog>
         if(!blogDTOList.isEmpty()){
             return Result.success(blogDTOList);
         }
+        //查询用户喜欢的blog
         return Result.success(queryBlogByUserLike(blogIds));
     }
+
+    @Override
+    @Transactional
+    public Result deleteBLog(int id) throws IOException {
+        //修改数据库
+        boolean updateSQL = this.update().eq("id", id).setSql("deleted = 0").update();
+        if(!updateSQL){
+            return Result.error("您要删除的博客不存在");
+        }
+        //删除blog，同时要移除es和mongoDB的blog信息，还要在mongoDB中移除该blog的下的所有评论
+        Query query = new Query();
+        query.addCriteria(Criteria.where("_id").is(id));
+        mongoTemplate.remove(query, BlogDTO.class);
+        //修改ES
+        DeleteRequest deleteRequest = new DeleteRequest("blog", String.valueOf(id));
+        client.delete(deleteRequest, RequestOptions.DEFAULT);
+        //移除MongoDB的评论
+        Query queryComment = new Query();
+        queryComment.addCriteria(Criteria.where("blogId").is(id));
+        mongoTemplate.remove(queryComment, CommentDTO.class);
+        return Result.success("删除成功");
+    }
+
+    @Override
+    public Result recycleBinBlog(int id) {
+        LambdaQueryWrapper<TBlog> blogLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        blogLambdaQueryWrapper.eq(TBlog::getBlogger, id);
+        blogLambdaQueryWrapper.eq(TBlog::getDeleted, 0);
+        List<TBlog> list = this.list(blogLambdaQueryWrapper);
+        List<BlogDTO> blogDTOList = populatingBlogDTO.PopulatingBlogDTOData(list);
+        return Result.success(blogDTOList);
+    }
+
+    @Override
+    public Result recoverBlog(BlogDTO blogDTO) throws IOException {
+        blogDTO.setDeleted(1);
+        //修改数据库
+        boolean update = this.update().eq("id", blogDTO.getId()).setSql("deleted = 1").update();
+        if(!update){
+            return Result.error("网络异常");
+        }
+        //添加ES
+        IndexRequest request = new IndexRequest("blog").id(String.valueOf(blogDTO.getId()));
+        request.source(JSON.toJSONString(blogDTO), XContentType.JSON);
+        client.index(request, RequestOptions.DEFAULT);
+        //添加MongoDB
+        mongoTemplate.insert(blogDTO);
+        return Result.success("恢复成功");
+    }
+
 
     private List<BlogDTO> queryBlogByUserLike(Set<String> members) {
         LambdaQueryWrapper<TBlog> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(TBlog::getId, members);
         List<TBlog> list = this.list(queryWrapper);
-        return PopulatingBlogDTOData(list);
+        return populatingBlogDTO.PopulatingBlogDTOData(list);
 
     }
 
-    /**
-     * 填充blogDTO
-     * @param list
-     * @return
-     */
-    private List<BlogDTO> PopulatingBlogDTOData(List<TBlog> list){
-        List<Integer> userIdList = list.stream().map(TBlog::getBlogger).collect(Collectors.toList());
-        List<Integer> typeIdList = list.stream().map(TBlog::getTypeId).collect(Collectors.toList());
-        Map<Integer, TUser> userMap =
-                userClient.getByIds(userIdList).stream().collect(Collectors.toMap(TUser::getId, tUser -> tUser));
-        Map<Integer, TBlogType> blogTypeMap = blogTypeClient.
-                getByTypeIds(typeIdList).stream().collect(Collectors.toMap(TBlogType::getId, blogType -> blogType));
-        return list.stream().map(blog -> {
-            BlogDTO blogDTO = new BlogDTO();
-            BeanUtil.copyProperties(blog, blogDTO);
-            TUser user = userMap.get(blog.getBlogger());
-            TBlogType tBlogType = blogTypeMap.get(blog.getTypeId());
-            blogDTO.setBloggerId(user.getId());
-            blogDTO.setBloggerName(user.getNickName());
-            blogDTO.setBloggerImage(user.getImage());
-            blogDTO.setTypeName(tBlogType.getName());
-            return blogDTO;
-        }).collect(Collectors.toList());
-    }
 
 }
 
