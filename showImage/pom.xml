@@ -8,8 +8,8 @@
     </parent>
 
     <artifactId>showImage</artifactId>
-    <packaging>jar</packaging>
-
+<!--    <packaging>jar</packaging>-->
+    <packaging>war</packaging>
     <name>showImage</name>
     <url>http://maven.apache.org</url>
 

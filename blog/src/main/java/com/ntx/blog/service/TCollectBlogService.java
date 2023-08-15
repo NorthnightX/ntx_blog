@@ -2,7 +2,7 @@ package com.ntx.blog.service;
 
 import com.ntx.blog.domain.TCollectBlog;
 import com.baomidou.mybatisplus.extension.service.IService;
-import org.springframework.stereotype.Service;
+
 
 /**
 * @author NorthnightX

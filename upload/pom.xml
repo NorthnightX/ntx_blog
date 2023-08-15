@@ -8,8 +8,8 @@
     </parent>
 
     <artifactId>upload</artifactId>
-    <packaging>jar</packaging>
-
+<!--    <packaging>jar</packaging>-->
+    <packaging>war</packaging>
     <name>upload</name>
     <url>http://maven.apache.org</url>
 

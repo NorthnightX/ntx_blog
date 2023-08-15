@@ -1,19 +1,13 @@
 package com.ntx.blog.controller;
 
-import cn.hutool.core.bean.BeanUtil;
+
 import com.alibaba.fastjson.JSON;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.api.R;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ntx.blog.domain.TBlog;
 import com.ntx.blog.dto.BlogDTO;
 import com.ntx.blog.service.TBlogService;
 import com.ntx.common.VO.UpdateUserForm;
-import com.ntx.common.client.BlogTypeClient;
-import com.ntx.common.client.UserClient;
 import com.ntx.common.domain.Result;
-import com.ntx.common.domain.TBlogType;
-import com.ntx.common.domain.TUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -21,13 +15,9 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.*;
-
 import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+
 
 
 @RestController

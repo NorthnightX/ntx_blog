@@ -10,8 +10,8 @@ spring:
   cloud: #nacos
     nacos:
       discovery:
-#        server-addr: 127.0.0.1:8848
-        server-addr: 8.140.17.235:8848
+        server-addr: 127.0.0.1:8848
+#        server-addr: 8.140.17.235:8848
         cluster-name: HangZhou
 
   application:   # 标记应用名称,用于nacos注册
@@ -73,6 +73,7 @@ spring:
       group-id: blogLike
       enable-auto-commit: true
       auto-commit-interval: 1000ms
+
   data:
     mongodb:
       uri: mongodb://8.140.17.235:27017/blogdb
@@ -91,11 +92,6 @@ logging: #日志
 #  ribbon:
 #    NFLoadBalancerRuleClassName: com.alibaba.cloud.nacos.ribbon.NacosRule
 #
-
-##      props.put("bootstrap.servers", " 192.168.203.131:9092");
-##      props.put("acks", "all");
-##      props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-##      props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
 
 
 #eureka: #euraka ！不能和nacos同时配置

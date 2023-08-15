@@ -3,7 +3,7 @@ package com.ntx.blog.utils;
 import cn.hutool.core.bean.BeanUtil;
 import com.ntx.blog.domain.TBlog;
 import com.ntx.blog.dto.BlogDTO;
-import com.ntx.blog.service.TLikeBlogService;
+
 import com.ntx.common.client.BlogTypeClient;
 import com.ntx.common.client.UserClient;
 import com.ntx.common.domain.TBlogType;

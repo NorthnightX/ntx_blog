@@ -1,7 +1,6 @@
 package com.ntx.blog.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ntx.blog.domain.TBlog;
 import org.apache.ibatis.annotations.Mapper;
 
