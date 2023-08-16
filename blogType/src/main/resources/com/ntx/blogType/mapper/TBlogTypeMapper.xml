@@ -6,14 +6,13 @@
 
 
     <select id="getTypeById" resultType="com.ntx.common.domain.TBlogType">
-
-
         select * from t_blog_type
         <where>
             id = #{id}
         </where>
 
     </select>
+
     <select id="getByIds" resultType="com.ntx.common.domain.TBlogType">
         select id, name from t_blog_type
         <where>
@@ -23,6 +22,7 @@
             </foreach>
         </where>
     </select>
+
     <select id="queryBlogPage" resultType="com.ntx.common.domain.TBlogType">
         select * from t_blog_type
                  <where>
@@ -32,10 +32,12 @@
                  </where>
                  limit #{start}, #{pageSize}
     </select>
+
     <select id="queryByBlogger" resultType="com.ntx.common.domain.TBlogType">
         select * from t_blog_type
         <where>
             blogger = #{blogger}
-    </where>
+        </where>
     </select>
+
 </mapper>

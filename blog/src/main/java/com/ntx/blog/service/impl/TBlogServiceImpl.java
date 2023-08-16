@@ -398,6 +398,7 @@ public  class TBlogServiceImpl extends ServiceImpl<TBlogMapper, TBlog>
         if(!updateSQL){
             return Result.error("您要删除的博客不存在");
         }
+
         //删除blog，同时要移除es和mongoDB的blog信息，还要在mongoDB中移除该blog的下的所有评论
         Query query = new Query();
         query.addCriteria(Criteria.where("_id").is(id));
