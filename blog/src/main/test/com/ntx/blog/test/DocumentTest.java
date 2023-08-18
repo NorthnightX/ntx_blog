@@ -33,6 +33,17 @@ public class DocumentTest {
     @Autowired
     private MongoTemplate mongoTemplate;
 
+
+    @Test
+    void test(){
+       int[] dp = new int[11];
+       dp[0] = 0;
+       dp[1] = 2;
+       for(int i = 2 ; i <dp.length; i++){
+            dp[i] = dp[i - 1] + dp[i - 2];
+       }
+        System.out.println(dp[10]);
+    }
     @Test
     void testFindAll(){
         Query query = new Query();

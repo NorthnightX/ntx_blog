@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -73,6 +74,7 @@ public class BlogKafkaQueryListener {
      */
     @KafkaListener(topics = "blogView", groupId = "blogView")
     public void topicListener1(ConsumerRecord<String, String> record) throws IOException {
+
         String value = record.value();
         int id = Integer.parseInt(value);
         //先改数据库
@@ -103,7 +105,7 @@ public class BlogKafkaQueryListener {
         String value = record.value();
         TBlog blog = JSON.parseObject(value, TBlog.class);
         //保存到数据库
-        blog.setGmtModified(LocalDateTime.now());
+        blog.setGmtCreate(LocalDateTime.now());
         blog.setGmtModified(LocalDateTime.now());
         blog.setComment(0);
         blog.setLikeCount(0);
