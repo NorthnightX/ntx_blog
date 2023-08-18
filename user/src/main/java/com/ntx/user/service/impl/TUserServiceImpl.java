@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.crypto.digest.MD5;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.ntx.common.VO.UpdateUserForm;
@@ -15,6 +16,7 @@ import com.ntx.user.common.ImageVerificationCode;
 import com.ntx.user.domain.LoginForm;
 import com.ntx.user.mapper.TUserMapper;
 import com.ntx.user.service.TUserService;
+import com.ntx.user.utils.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -89,6 +91,7 @@ public class TUserServiceImpl extends ServiceImpl<TUserMapper, TUser> implements
         } else if (!redisCode.equalsIgnoreCase(loginForm.getCode())) {
             return Result.error("验证码不正确");
         }
+
         //加密密码
         String MD5Password = MD5.create().digestHex(loginForm.getPassword());
         System.out.println(MD5Password);
@@ -101,6 +104,12 @@ public class TUserServiceImpl extends ServiceImpl<TUserMapper, TUser> implements
         //如果密码相等
         if (user.getPassword().equals(MD5Password)) {
             UserDTO userDTO = setUserInfoForReturn(user);
+            String s = JwtUtils.generateToken(JSON.toJSONString(user), 10000);
+            System.out.println(s);
+            boolean b = JwtUtils.validateToken(s);
+            System.out.println(b);
+            String userFromToken = JwtUtils.getUserFromToken(s);
+            System.out.println(userFromToken);
             return Result.success(userDTO);
         } else {
             return Result.error("密码错误");
