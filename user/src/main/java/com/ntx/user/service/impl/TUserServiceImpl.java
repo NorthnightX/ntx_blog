@@ -1,7 +1,6 @@
 package com.ntx.user.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.crypto.digest.MD5;
 import com.alibaba.fastjson.JSON;
@@ -11,12 +10,13 @@ import com.ntx.common.VO.UpdateUserForm;
 import com.ntx.common.client.BlogClient;
 import com.ntx.common.domain.Result;
 import com.ntx.common.domain.TUser;
+import com.ntx.common.utils.JwtUtils;
+import com.ntx.user.DTO.LoginDTO;
 import com.ntx.user.DTO.UserDTO;
 import com.ntx.user.common.ImageVerificationCode;
 import com.ntx.user.domain.LoginForm;
 import com.ntx.user.mapper.TUserMapper;
 import com.ntx.user.service.TUserService;
-import com.ntx.user.utils.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -66,24 +66,24 @@ public class TUserServiceImpl extends ServiceImpl<TUserMapper, TUser> implements
     @Override
     public Result login(LoginForm loginForm) {
         //判断用户用过手机还是账号登录
-        if (loginForm.getPhone() != null) {
-            //手机登录
-            if (loginForm.getPhoneCode() != null) {
-                //手机验证码登录
-                String phone = loginForm.getPhone();
-                String phoneCode = loginForm.getPhoneCode();
-                String redisKey = PHONE_CODE + phone;
-                if (!phoneCode.equals(stringRedisTemplate.opsForValue().get(redisKey))) {
-                    return Result.error("验证码错误");
-                }
-                //验证码正确
-                LambdaQueryWrapper<TUser> queryWrapper = new LambdaQueryWrapper<>();
-                queryWrapper.eq(TUser::getPhone, phone);
-                TUser user = this.getOne(queryWrapper);
-                UserDTO userDTO = setUserInfoForReturn(user);
-                return Result.success(userDTO);
-            }
-        }
+//        if (loginForm.getPhone() != null) {
+//            //手机登录
+//            if (loginForm.getPhoneCode() != null) {
+//                //手机验证码登录
+//                String phone = loginForm.getPhone();
+//                String phoneCode = loginForm.getPhoneCode();
+//                String redisKey = PHONE_CODE + phone;
+//                if (!phoneCode.equals(stringRedisTemplate.opsForValue().get(redisKey))) {
+//                    return Result.error("验证码错误");
+//                }
+//                //验证码正确
+//                LambdaQueryWrapper<TUser> queryWrapper = new LambdaQueryWrapper<>();
+//                queryWrapper.eq(TUser::getPhone, phone);
+//                TUser user = this.getOne(queryWrapper);
+//                UserDTO userDTO = setUserInfoForReturn(user);
+//                return Result.success(userDTO);
+//            }
+//        }
         //账号登陆
         String redisCode = stringRedisTemplate.opsForValue().get(loginForm.getCodeKey());
         if (redisCode == null) {
@@ -104,13 +104,14 @@ public class TUserServiceImpl extends ServiceImpl<TUserMapper, TUser> implements
         //如果密码相等
         if (user.getPassword().equals(MD5Password)) {
             UserDTO userDTO = setUserInfoForReturn(user);
-            String s = JwtUtils.generateToken(JSON.toJSONString(user), 10000);
-            System.out.println(s);
-            boolean b = JwtUtils.validateToken(s);
-            System.out.println(b);
-            String userFromToken = JwtUtils.getUserFromToken(s);
-            System.out.println(userFromToken);
-            return Result.success(userDTO);
+            String token = JwtUtils.generateToken(JSON.toJSONString(user));
+            String redisKey = LOGIN_USER + userDTO.getName();
+            stringRedisTemplate.opsForValue().set(redisKey, token, LOGIN_USER_TTL, TimeUnit.DAYS);
+            LoginDTO loginDTO = new LoginDTO();
+            loginDTO.setUserDTO(userDTO);
+            loginDTO.setToken(token);
+//            return Result.success(userDTO);
+            return Result.success(loginDTO);
         } else {
             return Result.error("密码错误");
         }
@@ -125,20 +126,20 @@ public class TUserServiceImpl extends ServiceImpl<TUserMapper, TUser> implements
     private UserDTO setUserInfoForReturn(TUser user) {
         UserDTO userDTO = new UserDTO();
         BeanUtil.copyProperties(user, userDTO);
-        Integer id = userDTO.getId();
-        String redisKey = LOGIN_USER + id;
-        Map<String, Object> userMap = BeanUtil.beanToMap(
-                userDTO, new HashMap<>(), CopyOptions.create().
-                        setIgnoreNullValue(true).setFieldValueEditor((fieldKey, fieldValue) -> {
-                            if (fieldValue == null) {
-                                fieldValue = "0";
-                            } else {
-                                fieldValue = fieldValue + "";
-                            }
-                            return fieldValue;
-                        }));
-        stringRedisTemplate.opsForHash().putAll(redisKey, userMap);
-        stringRedisTemplate.expire(redisKey, LOGIN_USER_TTL, TimeUnit.DAYS);
+//        Integer id = userDTO.getId();
+//        String redisKey = LOGIN_USER + id;
+//        Map<String, Object> userMap = BeanUtil.beanToMap(
+//                userDTO, new HashMap<>(), CopyOptions.create().
+//                        setIgnoreNullValue(true).setFieldValueEditor((fieldKey, fieldValue) -> {
+//                            if (fieldValue == null) {
+//                                fieldValue = "0";
+//                            } else {
+//                                fieldValue = fieldValue + "";
+//                            }
+//                            return fieldValue;
+//                        }));
+//        stringRedisTemplate.opsForHash().putAll(redisKey, userMap);
+//        stringRedisTemplate.expire(redisKey, LOGIN_USER_TTL, TimeUnit.DAYS);
         stringRedisTemplate.opsForHyperLogLog().add(LOGIN_USER_COUNT, String.valueOf(user.getId()));
         //更新ttl为当日剩余时间
         //加锁
@@ -222,10 +223,8 @@ public class TUserServiceImpl extends ServiceImpl<TUserMapper, TUser> implements
 
     @Override
     public Result getLoginUser(int id) {
-        TUser userById = this.getUserById(id);
-        UserDTO userDTO = new UserDTO();
-        BeanUtil.copyProperties(userById, userDTO);
-        return Result.success(userDTO);
+        TUser loginUser = userMapper.getLoginUser(id);
+        return Result.success(loginUser);
     }
 
     /**

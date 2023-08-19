@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ntx.blog.domain.TBlog;
 import com.ntx.blog.dto.BlogDTO;
 import com.ntx.blog.service.TBlogService;
+import com.ntx.blog.utils.UserHolder;
 import com.ntx.common.VO.UpdateUserForm;
 import com.ntx.common.domain.Result;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -119,6 +120,8 @@ public class BlogController {
         int updated = blogService.updateBlodById(blogDTO);
         if (updated == 1) {
             return Result.success("修改成功");
+        } else if (updated == 3) {
+            return Result.error("您没有权限");
         } else {
             return Result.error("修改失败");
         }
@@ -150,22 +153,29 @@ public class BlogController {
      */
     @PostMapping("/addBlog")
     public Result addBlog(@RequestBody TBlog blog) throws IOException {
-
-        String jsonString = JSON.toJSONString(blog);
-        kafkaTemplate.send("blogAdd", "", jsonString);
-        return Result.success("发布成功");
+        try {
+            Integer id = UserHolder.getUser().getId();
+            blog.setBlogger(id);
+            String jsonString = JSON.toJSONString(blog);
+            kafkaTemplate.send("blogAdd", "", jsonString);
+            return Result.success("发布成功");
+        } finally {
+            UserHolder.removeUser();
+        }
     }
 
     /**
      * 获取用户的博客
-     *
-     * @param id
      * @return
      */
-    @GetMapping("/blogByUser/{id}")
-    public Result blogByUser(@PathVariable int id) {
-        return blogService.blogByUser(id);
-
+    @GetMapping("/blogByUser")
+    public Result blogByUser() {
+        try {
+            Integer id = UserHolder.getUser().getId();
+            return blogService.blogByUser(id);
+        } finally {
+            UserHolder.removeUser();
+        }
     }
 
     /**
@@ -194,9 +204,19 @@ public class BlogController {
         return blogService.getMaxWatchInTwoDays();
     }
 
-    @GetMapping("/userLikeBlogs/{id}")
-    public Result userLikeBlogs(@PathVariable int id){
-        return blogService.userLikeBlogs(id);
+    /**
+     * 喜欢博客
+     * @return
+     */
+    @GetMapping("/userLikeBlogs")
+    public Result userLikeBlogs(){
+        Integer id;
+        try {
+            id = UserHolder.getUser().getId();
+            return blogService.userLikeBlogs(id);
+        } finally {
+            UserHolder.removeUser();
+        }
     }
 
     /**
@@ -211,20 +231,25 @@ public class BlogController {
 
     /**
      * 查询用户删除的blog
-     * @param id
+
      * @return
      */
-    @GetMapping("/recycleBinBlog/{id}")
-    public Result recycleBinBlog(@PathVariable int id){
-        return blogService.recycleBinBlog(id);
+    @GetMapping("/recycleBinBlog")
+    public Result recycleBinBlog(){
+        try {
+            Integer id = UserHolder.getUser().getId();
+            return blogService.recycleBinBlog(id);
+        } finally {
+            UserHolder.removeUser();
+        }
     }
 
     /**
      * 恢复blog
      * @return
      */
-    @PutMapping("/recoverBlog")
-    public Result recoverBlog(@RequestBody BlogDTO blogDTO) throws IOException {
-        return blogService.recoverBlog(blogDTO);
+    @PutMapping("/recoverBlog/{blogId}")
+    public Result recoverBlog(@PathVariable Integer blogId) throws IOException {
+        return blogService.recoverBlog(blogId);
     }
 }

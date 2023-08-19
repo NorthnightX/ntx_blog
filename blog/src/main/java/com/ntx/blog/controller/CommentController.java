@@ -5,12 +5,14 @@ import com.ntx.blog.VO.DeleteCommentVO;
 import com.ntx.blog.domain.TComment;
 import com.ntx.blog.service.TBlogService;
 import com.ntx.blog.service.TCommentService;
+import com.ntx.blog.utils.UserHolder;
 import com.ntx.common.domain.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 
 
@@ -33,8 +35,14 @@ public class CommentController {
      */
     @PostMapping("/addComment")
     public Result addComment(@RequestBody TComment comment){
-        kafkaTemplate.send("blogComment","", JSON.toJSONString(comment));
-        return Result.success("评论成功");
+        try {
+            Integer id = UserHolder.getUser().getId();
+            comment.setUserId(id);
+            kafkaTemplate.send("blogComment","", JSON.toJSONString(comment));
+            return Result.success("评论成功");
+        } finally {
+            UserHolder.removeUser();
+        }
     }
 
     /**

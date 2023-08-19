@@ -14,6 +14,7 @@ import com.ntx.blog.service.TBlogService;
 
 import com.ntx.blog.service.TLikeBlogService;
 import com.ntx.blog.utils.PopulatingBlogDTO;
+import com.ntx.blog.utils.UserHolder;
 import com.ntx.common.VO.UpdateUserForm;
 import com.ntx.common.client.BlogTypeClient;
 import com.ntx.common.client.UserClient;
@@ -91,10 +92,16 @@ public  class TBlogServiceImpl extends ServiceImpl<TBlogMapper, TBlog>
      */
     @Override
     public int updateBlodById(BlogDTO blogDTO) throws IOException {
+        Integer id = UserHolder.getUser().getId();
+        TBlog tBlog = this.getById(blogDTO.getId());
+        if(!Objects.equals(tBlog.getBlogger(), id)){
+            return 3;
+        }
         blogDTO.setGmtModified(LocalDateTime.now());
         //更新数据库
         TBlog blog = new TBlog();
         BeanUtil.copyProperties(blogDTO, blog);
+        blog.setBlogger(id);
         boolean b = this.updateById(blog);
         if(!b){
             return 2;
@@ -308,6 +315,11 @@ public  class TBlogServiceImpl extends ServiceImpl<TBlogMapper, TBlog>
         //从mongoDB获取数据
         BlogDTO dto = mongoTemplate.findById(id, BlogDTO.class);
         if (dto != null) {
+            TUser user = UserHolder.getUser();
+            //未登录用户浏览不加点击量
+            if(user == null){
+                return Result.success(dto);
+            }
             kafkaTemplate.send("blogView", "", String.valueOf(id));
             return Result.success(dto);
         }
@@ -334,6 +346,11 @@ public  class TBlogServiceImpl extends ServiceImpl<TBlogMapper, TBlog>
         blogDTO.setBloggerId(blogger);
         //存储到MongoDB
         mongoTemplate.insert(blogDTO);
+        TUser user = UserHolder.getUser();
+        //未登录用户浏览不加点击量
+        if(user == null){
+            return Result.success(blogDTO);
+        }
         kafkaTemplate.send("blogView", "", String.valueOf(id));
         return Result.success(blogDTO);
     }
@@ -393,24 +410,33 @@ public  class TBlogServiceImpl extends ServiceImpl<TBlogMapper, TBlog>
     @Override
     @Transactional
     public Result deleteBLog(int id) throws IOException {
-        //修改数据库
-        boolean updateSQL = this.update().eq("id", id).setSql("deleted = 0").update();
-        if(!updateSQL){
-            return Result.error("您要删除的博客不存在");
-        }
+        try {
+            Integer userId = UserHolder.getUser().getId();
+            TBlog tBlog = this.getById(id);
+            if(!Objects.equals(userId, tBlog.getBlogger())){
+                return Result.success("你没有权限");
+            }
+            //修改数据库
+            boolean updateSQL = this.update().eq("id", id).setSql("deleted = 0").update();
+            if(!updateSQL){
+                return Result.error("您要删除的博客不存在");
+            }
 
-        //删除blog，同时要移除es和mongoDB的blog信息，还要在mongoDB中移除该blog的下的所有评论
-        Query query = new Query();
-        query.addCriteria(Criteria.where("_id").is(id));
-        mongoTemplate.remove(query, BlogDTO.class);
-        //修改ES
-        DeleteRequest deleteRequest = new DeleteRequest("blog", String.valueOf(id));
-        client.delete(deleteRequest, RequestOptions.DEFAULT);
-        //移除MongoDB的评论
-        Query queryComment = new Query();
-        queryComment.addCriteria(Criteria.where("blogId").is(id));
-        mongoTemplate.remove(queryComment, CommentDTO.class);
-        return Result.success("删除成功");
+            //删除blog，同时要移除es和mongoDB的blog信息，还要在mongoDB中移除该blog的下的所有评论
+            Query query = new Query();
+            query.addCriteria(Criteria.where("_id").is(id));
+            mongoTemplate.remove(query, BlogDTO.class);
+            //修改ES
+            DeleteRequest deleteRequest = new DeleteRequest("blog", String.valueOf(id));
+            client.delete(deleteRequest, RequestOptions.DEFAULT);
+            //移除MongoDB的评论
+            Query queryComment = new Query();
+            queryComment.addCriteria(Criteria.where("blogId").is(id));
+            mongoTemplate.remove(queryComment, CommentDTO.class);
+            return Result.success("删除成功");
+        } finally {
+            UserHolder.removeUser();
+        }
     }
 
     @Override
@@ -418,25 +444,33 @@ public  class TBlogServiceImpl extends ServiceImpl<TBlogMapper, TBlog>
         LambdaQueryWrapper<TBlog> blogLambdaQueryWrapper = new LambdaQueryWrapper<>();
         blogLambdaQueryWrapper.eq(TBlog::getBlogger, id);
         blogLambdaQueryWrapper.eq(TBlog::getDeleted, 0);
+        blogLambdaQueryWrapper.select(TBlog.class, table -> !table.getColumn().equals("content"));
         List<TBlog> list = this.list(blogLambdaQueryWrapper);
-        List<BlogDTO> blogDTOList = populatingBlogDTO.PopulatingBlogDTOData(list);
-        return Result.success(blogDTOList);
+//        List<BlogDTO> blogDTOList = populatingBlogDTO.PopulatingBlogDTOData(list);
+        return Result.success(list);
     }
 
     @Override
-    public Result recoverBlog(BlogDTO blogDTO) throws IOException {
-        blogDTO.setDeleted(1);
+    @Transactional
+    public Result recoverBlog(Integer blogId) throws IOException {
+        TBlog tBlog = this.getById(blogId);
         //修改数据库
-        boolean update = this.update().eq("id", blogDTO.getId()).setSql("deleted = 1").update();
+        boolean update = this.update().eq("id", blogId).setSql("deleted = 1").update();
         if(!update){
             return Result.error("网络异常");
         }
-        //添加ES
-        IndexRequest request = new IndexRequest("blog").id(String.valueOf(blogDTO.getId()));
-        request.source(JSON.toJSONString(blogDTO), XContentType.JSON);
-        client.index(request, RequestOptions.DEFAULT);
-        //添加MongoDB
-        mongoTemplate.insert(blogDTO);
+        tBlog.setDeleted(1);
+        ArrayList<TBlog> arrayList = new ArrayList<>();
+        arrayList.add(tBlog);
+        List<BlogDTO> blogDTOList = populatingBlogDTO.PopulatingBlogDTOData(arrayList);
+        for (BlogDTO blogDTO : blogDTOList) {
+            //添加ES
+            IndexRequest request = new IndexRequest("blog").id(String.valueOf(blogDTO.getId()));
+            request.source(JSON.toJSONString(blogDTO), XContentType.JSON);
+            client.index(request, RequestOptions.DEFAULT);
+            //添加MongoDB
+            mongoTemplate.insert(blogDTO);
+        }
         return Result.success("恢复成功");
     }
 

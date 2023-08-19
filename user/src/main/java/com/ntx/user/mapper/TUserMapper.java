@@ -14,6 +14,8 @@ import org.apache.ibatis.annotations.Mapper;
 public interface TUserMapper extends BaseMapper<TUser> {
 
     TUser queryUserById(int id);
+
+    TUser getLoginUser(int id);
 }
 
 

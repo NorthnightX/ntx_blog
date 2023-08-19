@@ -11,4 +11,9 @@
             id = #{id}
         </where>
     </select>
+    <select id="getLoginUser" resultType="com.ntx.common.domain.TUser">
+        select id, name, nick_name,email, phone,image from t_user <where>
+        id = ${id}
+    </where>
+    </select>
 </mapper>

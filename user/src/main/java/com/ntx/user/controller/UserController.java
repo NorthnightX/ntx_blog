@@ -1,7 +1,9 @@
 package com.ntx.user.controller;
 
+import com.alibaba.fastjson.JSON;
 import com.ntx.common.domain.TUser;
 import com.ntx.common.VO.UpdateUserForm;
+import com.ntx.common.utils.JwtUtils;
 import com.ntx.user.domain.LoginForm;
 import com.ntx.user.service.TUserService;
 import com.ntx.common.domain.Result;
@@ -10,6 +12,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.List;
 
@@ -70,20 +73,31 @@ public class UserController {
      * @return
      */
     @PutMapping("/update")
-    public Result userUpdate(@RequestBody UpdateUserForm userForm){
+    public Result userUpdate(@RequestBody UpdateUserForm userForm, HttpServletRequest request){
+        String authorization = request.getHeader("Authorization");
+        String userFromToken = JwtUtils.getUserFromToken(authorization);
+        TUser user = JSON.parseObject(userFromToken, TUser.class);
+        if(user == null){
+            return Result.error("网络异常");
+        }
+        userForm.setId(user.getId());
         return userService.updateByUserById(userForm);
     }
 
 
     /**
      * 查询登陆用户信息
-     * @param id
      * @return
      */
-    @GetMapping("/getLoginUser/{id}")
-    public Result getLoginUser(@PathVariable int id){
-        return userService.getLoginUser(id);
-
+    @GetMapping("/getLoginUser")
+    public Result getLoginUser(HttpServletRequest request){
+        String authorization = request.getHeader("Authorization");
+        String userFromToken = JwtUtils.getUserFromToken(authorization);
+        TUser user = JSON.parseObject(userFromToken, TUser.class);
+        if(user == null){
+            return Result.error("网络异常");
+        }
+        return userService.getLoginUser(user.getId());
     }
 
     /**

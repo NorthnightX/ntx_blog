@@ -12,6 +12,7 @@ import com.ntx.blog.service.TBlogService;
 import com.ntx.blog.service.TCommentService;
 import com.ntx.blog.mapper.TCommentMapper;
 
+import com.ntx.blog.utils.UserHolder;
 import com.ntx.common.client.UserClient;
 import com.ntx.common.domain.Result;
 import com.ntx.common.domain.TUser;
@@ -102,25 +103,29 @@ public class TCommentServiceImpl extends ServiceImpl<TCommentMapper, TComment>
         //获取评论人Id
         Integer commentUserId = comment.getUserId();
         //获取删除者Id
-        Integer deleteUserId = commentVO.getUserId();
-        //如果删除者是博客博主或者评论发表人
-        if(Objects.equals(deleteUserId, blogger) || Objects.equals(deleteUserId, commentUserId)){
-            boolean delete = updateDeleteForComment(blog, comment.getId());
-            if(delete){
-                return Result.success("删除成功");
-            }
-        }
-        List<TUser> userList = userClient.getByIds(Collections.singletonList(deleteUserId));
-        for (TUser user : userList) {
-            //如果用户是管理员
-            if(user.getRole() == 1){
+        Integer deleteUserId = UserHolder.getUser().getId();
+        try {
+            //如果删除者是博客博主或者评论发表人
+            if(Objects.equals(deleteUserId, blogger) || Objects.equals(deleteUserId, commentUserId)){
                 boolean delete = updateDeleteForComment(blog, comment.getId());
                 if(delete){
                     return Result.success("删除成功");
                 }
             }
+            List<TUser> userList = userClient.getByIds(Collections.singletonList(deleteUserId));
+            for (TUser user : userList) {
+                //如果用户是管理员
+                if(user.getRole() == 1){
+                    boolean delete = updateDeleteForComment(blog, comment.getId());
+                    if(delete){
+                        return Result.success("删除成功");
+                    }
+                }
+            }
+            return Result.error("您没有权限删除该条评论");
+        } finally {
+            UserHolder.removeUser();
         }
-        return Result.error("您没有权限删除该条评论");
     }
 
 

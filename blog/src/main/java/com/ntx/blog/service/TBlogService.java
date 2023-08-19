@@ -36,7 +36,7 @@ public interface TBlogService extends IService<TBlog> {
 
     Result recycleBinBlog(int id);
 
-    Result recoverBlog(BlogDTO id) throws IOException;
+    Result recoverBlog(Integer id) throws IOException;
 
 //    Result saveBlog(TBlog blog) throws IOException;
 }

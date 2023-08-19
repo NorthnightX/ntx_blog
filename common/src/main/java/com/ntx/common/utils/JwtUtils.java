@@ -1,9 +1,8 @@
-package com.ntx.user.utils;
+package com.ntx.common.utils;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
 
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
@@ -14,6 +13,8 @@ import java.util.Date;
 public class JwtUtils {
     //使用SHA-256进行签名
     private static final String KEY = "ntx_blog_auth";
+//    private static final Long  TTL = 1L;
+    private static final Long  TTL = 604800000L;
     private static Key getSigningKey() {
         // 使用 SHA-256 生成密钥
         try {
@@ -27,9 +28,9 @@ public class JwtUtils {
     }
 
     //加密
-    public static String generateToken(String userInfo, long expirationMillis) {
+    public static String generateToken(String userInfo) {
         Date now = new Date();
-        Date expiration = new Date(now.getTime() + expirationMillis);
+        Date expiration = new Date(now.getTime() + TTL);
         return Jwts.builder()
                 .setSubject(userInfo)
                 //发布时间

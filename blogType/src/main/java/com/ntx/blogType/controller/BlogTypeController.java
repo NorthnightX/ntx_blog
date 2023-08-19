@@ -1,13 +1,17 @@
 package com.ntx.blogType.controller;
 
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ntx.blogType.service.TBlogTypeService;
 import com.ntx.common.domain.Result;
 import com.ntx.common.domain.TBlogType;
+import com.ntx.common.domain.TUser;
+import com.ntx.common.utils.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -94,12 +98,17 @@ public class BlogTypeController {
 
     /**
      * 根据用户id查找分类
-     * @param id
      * @return
      */
-    @GetMapping("/getTypeByUser/{id}")
-    public Result getTypeByUser(@PathVariable int id){
-        return  blogTypeService.getTypeByUser(id);
+    @GetMapping("/getTypeByUser")
+    public Result getTypeByUser(HttpServletRequest request){
+        String authorization = request.getHeader("Authorization");
+        String userFromToken = JwtUtils.getUserFromToken(authorization);
+        TUser user = JSON.parseObject(userFromToken, TUser.class);
+        if(user == null){
+            return Result.error("网络异常");
+        }
+        return  blogTypeService.getTypeByUser(user.getId());
     }
 
     /**
@@ -108,7 +117,14 @@ public class BlogTypeController {
      * @return
      */
     @PostMapping("/addType")
-    public Result addType(@RequestBody TBlogType blogType){
+    public Result addType(@RequestBody TBlogType blogType, HttpServletRequest request){
+        String authorization = request.getHeader("Authorization");
+        String userFromToken = JwtUtils.getUserFromToken(authorization);
+        TUser user = JSON.parseObject(userFromToken, TUser.class);
+        if(user == null){
+            return Result.error("网络异常");
+        }
+        blogType.setBlogger(user.getId());
         blogType.setGmtModified(LocalDateTime.now());
         blogType.setGmtCreate(LocalDateTime.now());
         blogType.setDeleted(1);
