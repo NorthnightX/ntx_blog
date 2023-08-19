@@ -23,7 +23,7 @@ public class JwtUtils {
             byte[] digest = md.digest(keyBytes);
             return new SecretKeySpec(digest, "HmacSHA256");
         } catch (Exception e) {
-            throw new RuntimeException("Error generating signing key", e);
+            throw new RuntimeException("生成密钥出现异常", e);
         }
     }
 
@@ -61,6 +61,15 @@ public class JwtUtils {
         try {
             Claims claims = Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(token).getBody();
             return claims.getSubject();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+    //获取token的过期时间
+    public static Date getExpirationDateFromToken(String token) {
+        try {
+            Claims claims = Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(token).getBody();
+            return claims.getExpiration();
         } catch (Exception e) {
             return null;
         }

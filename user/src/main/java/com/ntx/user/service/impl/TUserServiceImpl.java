@@ -105,8 +105,8 @@ public class TUserServiceImpl extends ServiceImpl<TUserMapper, TUser> implements
         if (user.getPassword().equals(MD5Password)) {
             UserDTO userDTO = setUserInfoForReturn(user);
             String token = JwtUtils.generateToken(JSON.toJSONString(user));
-            String redisKey = LOGIN_USER + userDTO.getName();
-            stringRedisTemplate.opsForValue().set(redisKey, token, LOGIN_USER_TTL, TimeUnit.DAYS);
+//            String redisKey = LOGIN_USER + user.getId();
+//            stringRedisTemplate.opsForValue().set(redisKey, token, LOGIN_USER_TTL, TimeUnit.DAYS);
             LoginDTO loginDTO = new LoginDTO();
             loginDTO.setUserDTO(userDTO);
             loginDTO.setToken(token);

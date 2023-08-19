@@ -31,6 +31,7 @@ spring:
             - Path=/image/** #路径断言，判断路径是不是以blog开头
       globalcors:
         add-to-simple-url-handler-mapping: true #是否拦截浏览器的options请求
+
         cors-configurations:
           '[/**]':
             allowedOrigins: "*" #允许那些问题跨域
@@ -38,6 +39,7 @@ spring:
             allowedMethods: "*" #允许跨域的ajax的请求
             allowCredentials: true # 是否允许携带cookie
             maxAge: 360000 # 这次跨域检测的有效期
+            exposed-headers: "Authorization" #设置向浏览器暴漏的响应头
 #      default-filters:
 #        - AddRequestHeader=NTX,NorthNightX #全局过滤器
 
